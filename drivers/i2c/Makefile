@@ -11,6 +11,7 @@ obj-$(CONFIG_I2C_CROS_EC_TUNNEL) += cros_ec_tunnel.o
 obj-$(CONFIG_I2C_CROS_EC_LDO) += cros_ec_ldo.o
 
 obj-$(CONFIG_SYS_I2C_ADI) += adi_i2c.o
+obj-$(CONFIG_DRIVER_ASPEED_I2C) += aspeed_i2c.o
 obj-$(CONFIG_I2C_MV) += mv_i2c.o
 obj-$(CONFIG_PCA9564_I2C) += pca9564_i2c.o
 obj-$(CONFIG_TSI108_I2C) += tsi108_i2c.o
