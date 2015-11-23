@@ -133,6 +133,10 @@ config TARGET_MX25PDK
 	bool "Support mx25pdk"
 	select CPU_ARM926EJS
 
+config TARGET_AST2400
+	bool "Support ast2400"
+	select CPU_ARM926EJS
+
 config TARGET_ZMX25
 	bool "Support zmx25"
 	select CPU_ARM926EJS
@@ -817,6 +821,7 @@ source "board/technologic/ts4800/Kconfig"
 source "board/vscom/baltos/Kconfig"
 source "board/woodburn/Kconfig"
 source "board/work-microwave/work_92105/Kconfig"
+source "board/aspeed/ast2400/Kconfig"
 
 source "arch/arm/Kconfig.debug"
 
