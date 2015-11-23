@@ -20,32 +20,21 @@
 #ifndef __CONFIG_H
 #define __CONFIG_H
 
-/* Uncommit the following line to enable JTAG in u-boot */
-//#define CONFIG_ASPEED_ENABLE_JTAG
+#undef CONFIG_ASPEED_ENABLE_JTAG
 
 /*
  * High Level Configuration Options
  * (easy to change)
  */
-//#define CONFIG_INIT_CRITICAL			/* define for U-BOOT 1.1.1 */
 #undef  CONFIG_INIT_CRITICAL			/* undef for  U-BOOT 1.1.4 */
-//#define CONFIG_FPGA_ASPEED	1
 #define CONFIG_ARM926EJS	1		/* This is an arm926ejs CPU */
 #define	CONFIG_ASPEED		1
 #define CONFIG_AST2400		1
-//#define CONFIG_AST1070		1
-//#define CONFIG_SYS_FLASH_CFI			/* CONFIG_FLASH_CFI, CONFIG_FLASH_SPI is exclusive*/
 #define CONFIG_FLASH_SPI
-//#define CONFIG_2SPIFLASH			/* Boot SPI: CS2, 2nd SPI: CS0 */
 #undef CONFIG_2SPIFLASH
 #undef CONFIG_ASPEED_SLT
 #define CONFIG_FLASH_AST2300
-//#define CONFIG_FLASH_AST2300_DMA
-//#define CONFIG_FLASH_SPIx2_Dummy
-//#define CONFIG_FLASH_SPIx4_Dummy
-#define CONFIG_CRT_DISPLAY	1		/* undef if not support CRT */
 
-//#define CONFIG_USE_IRQ				/* we don't need IRQ/FIQ stuff */
 #define CONFIG_MISC_INIT_R
 
 /*
@@ -68,23 +57,9 @@
  *    CONFIG_DRAM_UART_38400 // set the UART baud rate to 38400, default is 115200
  */
 
-//1. DRAM Size
-//#define    CONFIG_DRAM_512MBIT
 #define    CONFIG_DRAM_1GBIT
-//#define    CONFIG_DRAM_2GBIT
-//#define    CONFIG_DRAM_4GBIT
-//2. DRAM Speed
-//#define    CONFIG_DRAM_336
 #define    CONFIG_DRAM_408
-//3. VGA Mode
-//#define    CONFIG_CRT_DISPLAY
-//4. ECC Function enable
-//#define    CONFIG_DRAM_ECC
-//5. UART Debug Message
 #define    CONFIG_DRAM_UART_OUT
-//#define    CONFIG_DRAM_UART_38400
-
-
 
 /*
  * Environment Config
@@ -229,7 +204,6 @@
  */
 #define CONFIG_SYS_LONGHELP				/* undef to save memory		*/
 
-//#define CONFIG_SYS_PROMPT		"boot# " 	/* Monitor Command Prompt	*/
 #define CONFIG_SYS_CBSIZE		256		/* Console I/O Buffer Size	*/
 #define CONFIG_SYS_PBSIZE (CONFIG_SYS_CBSIZE+sizeof(CONFIG_SYS_PROMPT)+16) /* Print Buffer Size */
 #define CONFIG_SYS_MAXARGS		16		/* max number of command args	*/
@@ -330,10 +304,6 @@
   _GET_MAC_PHY_SETTING(CONFIG_ASPEED_MAC_CONFIG)
 #define CONFIG_MAC_INTERFACE_CLOCK_DELAY	0x2255
 #define CONFIG_RANDOM_MACADDR
-//#define CONFIG_GATEWAYIP 192.168.0.1
-//#define CONFIG_NETMASK   255.255.255.0
-//#define CONFIG_IPADDR    192.168.0.45
-//#define CONFIG_SERVERIP  192.168.0.81
 
 /*
  * SLT
