@@ -12,8 +12,8 @@
 static const char ThisFile[] = "STRESS.c";
 
 #include "SWFUNC.H"
-#include <COMMINF.H>
-#include <IO.H>
+#include "COMMINF.H"
+#include "IO.H"
 
 #define TIMEOUT_DRAM              5000000
 

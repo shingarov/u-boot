@@ -31,7 +31,7 @@ static const char ThisFile[] = "IO.c";
   #include <post.h>
   #include <malloc.h>
   #include <net.h>
-  #include <COMMINF.H>
+  #include "COMMINF.H"
 #endif
 #ifdef SLT_DOS
   #include <stdlib.h>

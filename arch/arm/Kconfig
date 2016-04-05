@@ -112,6 +112,10 @@ config TARGET_AST2300
 	bool "Support ast2300"
 	select CPU_ARM926EJS
 
+config TARGET_PALMETTO
+        bool "Support palmetto"
+        select CPU_ARM926EJS
+
 config ARCH_DAVINCI
 	bool "TI DaVinci"
 	select CPU_ARM926EJS
@@ -814,6 +818,7 @@ source "arch/arm/imx-common/Kconfig"
 
 source "board/aspeed/ast2300/Kconfig"
 source "board/aspeed/ast2400/Kconfig"
+source "board/aspeed/palmetto/Kconfig"
 source "board/BuR/kwb/Kconfig"
 source "board/BuR/tseries/Kconfig"
 source "board/CarMediaLab/flea3/Kconfig"
