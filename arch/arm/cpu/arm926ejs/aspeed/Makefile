@@ -1,0 +1,31 @@
+# This program is free software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public License as
+# published by the Free Software Foundation; either version 2 of
+# the License, or (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 59 Temple Place, Suite 330, Boston,
+# MA 02111-1307 USA
+#
+
+obj-y	= timer.o
+obj-y	+= reset.o
+obj-y	+= mactest.o
+obj-y	+= DRAM_SPI.o
+obj-y	+= IO.o
+obj-y	+= LIB.o
+obj-y	+= MAC.o
+obj-y	+= NCSI.o
+obj-y	+= PCI_SPI.o
+obj-y	+= PHY.o
+obj-y	+= SPIM.o
+obj-y	+= STDUBOOT.o
+obj-y	+= PLLTESTU.o
+obj-y	+= TRAPTEST.o
+obj-y	+= STRESS.o
