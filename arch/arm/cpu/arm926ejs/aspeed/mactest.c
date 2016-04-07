@@ -20,7 +20,6 @@ static const char ThisFile[] = "MACTEST.c";
   #include <malloc.h>
   #include <net.h>
   #include "COMMINF.H"
-  #include "STDUBOOT.H"
   #include "IO.H"
 #else
   #include <stdlib.h>
@@ -229,7 +228,7 @@ int main(int argc, char *argv[])
         GSpeed           = DEF_SPEED;
 
         // Get setting information by user
-        GRun_Mode        = (BYTE)atoi(argv[1]);
+        GRun_Mode        = (BYTE)simple_strtol(argv[1], NULL, 10);
 
         if ( ModeSwitch == MODE_NSCI ) {
             ARPNumCnt        = DEF_ARPNUMCNT;
@@ -242,24 +241,24 @@ int main(int argc, char *argv[])
         if (argc > 1) {
             if ( ModeSwitch == MODE_NSCI )
                 switch (argc) {
-                    case 7: ARPNumCnt        = (ULONG)atoi(argv[6]);
-                    case 6: IOTimingBund_arg = (BYTE)atoi(argv[5]);
-                    case 5: TestMode         = (BYTE)atoi(argv[4]);
-                    case 4: ChannelTolNum    = (BYTE)atoi(argv[3]);
-                    case 3: PackageTolNum    = (BYTE)atoi(argv[2]);
+                    case 7: ARPNumCnt        = simple_strtol(argv[6], NULL, 10);
+                    case 6: IOTimingBund_arg = (BYTE)simple_strtol(argv[6], NULL, 10);
+                    case 5: TestMode         = (BYTE)simple_strtol(argv[4], NULL, 10);
+                    case 4: ChannelTolNum    = (BYTE)simple_strtol(argv[3], NULL, 10);
+                    case 3: PackageTolNum    = (BYTE)simple_strtol(argv[2], NULL, 10);
                     default: break;
                 }
             else
                 switch (argc) {
-                    case 9: UserDVal         = strtoul (argv[8], &stop_at, 16);
-                    case 8: IOTimingBund_arg = (BYTE)atoi(argv[7]);
-                    case 7: PHY_ADR_arg      = (BYTE)atoi(argv[6]);
-                    case 6: TestMode         = (BYTE)atoi(argv[5]);
+                    case 9: UserDVal         = simple_strtoul(argv[8], &stop_at, 16);
+                    case 8: IOTimingBund_arg = (BYTE)simple_strtol(argv[7], NULL, 10);
+                    case 7: PHY_ADR_arg      = (BYTE)simple_strtol(argv[6], NULL, 10);
+                    case 6: TestMode         = (BYTE)simple_strtol(argv[5], NULL, 10);
                     case 5: strcpy(LOOP_Str, argv[4]);
                         if (!strcmp(LOOP_Str, "#")) LOOP_INFINI = 1;
-                        else                        LOOP_MAX_arg = (ULONG)atoi(LOOP_Str);
-                    case 4: GCtrl            = (BYTE)atoi(argv[3]);
-                    case 3: GSpeed           = (BYTE)atoi(argv[2]);
+                        else                        LOOP_MAX_arg = (ULONG)simple_strtol(LOOP_Str, NULL, 10);
+                    case 4: GCtrl            = (BYTE)simple_strtol(argv[3], NULL, 10);
+                    case 3: GSpeed           = (BYTE)simple_strtol(argv[2], NULL, 10);
                     default: break;
                 }
 

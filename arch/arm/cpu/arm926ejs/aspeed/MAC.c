@@ -17,7 +17,6 @@ static const char ThisFile[] = "MAC.c";
   #include <common.h>
   #include <command.h>
   #include "COMMINF.H"
-  #include "STDUBOOT.H"
 #endif
 #ifdef SLT_DOS
   #include <stdio.h>

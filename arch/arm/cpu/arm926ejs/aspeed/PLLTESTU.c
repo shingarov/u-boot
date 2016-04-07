@@ -14,7 +14,6 @@ static const char ThisFile[] = "PLLTEST.c";
 #include "SWFUNC.H"
 
 #include "COMMINF.H"
-#include "STDUBOOT.H"
 #include "TYPEDEF.H"
 #include "IO.H"
 #include "PLLTESTU.H"
@@ -386,7 +385,7 @@ int pll_function(int argc, char *argv[])
                     }
                     break;
                 case 2:
-                    ulErrRate = (ULONG) strtoul(argv[i], &stop_at, 10);
+                    ulErrRate = simple_strtoul(argv[i], &stop_at, 10);
 
                     break;
                 default:

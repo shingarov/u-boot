@@ -25,7 +25,6 @@ obj-y	+= NCSI.o
 obj-y	+= PCI_SPI.o
 obj-y	+= PHY.o
 obj-y	+= SPIM.o
-obj-y	+= STDUBOOT.o
 obj-y	+= PLLTESTU.o
 obj-y	+= TRAPTEST.o
 obj-y	+= STRESS.o

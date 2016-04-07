@@ -61,9 +61,9 @@ int do_phyread (cmd_tbl_t * cmdtp, int flag, int argc, char *argv[])
             break;
         }
 
-        MACnum  = strtoul(argv[1], NULL, 16);
-        PHYaddr = strtoul(argv[2], NULL, 16);
-        PHYreg  = strtoul(argv[3], NULL, 16);
+        MACnum  = simple_strtoul(argv[1], NULL, 16);
+        PHYaddr = simple_strtoul(argv[2], NULL, 16);
+        PHYreg  = simple_strtoul(argv[3], NULL, 16);
 
         if ( MACnum == 0 ) {
             // Set MAC 0
@@ -141,10 +141,10 @@ int do_phywrite (cmd_tbl_t * cmdtp, int flag, int argc, char *argv[])
             break;
         }
 
-        MACnum   = strtoul(argv[1], NULL, 16);
-        PHYaddr  = strtoul(argv[2], NULL, 16);
-        PHYreg   = strtoul(argv[3], NULL, 16);
-        reg_data = strtoul(argv[4], NULL, 16);
+        MACnum   = simple_strtoul(argv[1], NULL, 16);
+        PHYaddr  = simple_strtoul(argv[2], NULL, 16);
+        PHYreg   = simple_strtoul(argv[3], NULL, 16);
+        reg_data = simple_strtoul(argv[4], NULL, 16);
 
         if ( MACnum == 0 ) {
             // Set MAC 0

@@ -122,7 +122,7 @@ int dram_stress_function(int argc, char *argv[])
         return ( ret );
     }
     else {
-        Testcounter = (unsigned int) strtoul(argv[1], &stop_at, 10);
+        Testcounter = simple_strtoul(argv[1], &stop_at, 10);
     }
 
     WriteSOC_DD(0x1E6E0000, 0xFC600309);
