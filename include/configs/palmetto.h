@@ -100,7 +100,7 @@
 #define CONFIG_BOOTDELAY	3		/* autoboot after 3 seconds	*/
 #define CONFIG_AUTOBOOT_KEYED
 #define CONFIG_AUTOBOOT_PROMPT		\
-	"autoboot in %d seconds (stop with 'Delete' key)...\n", bootdelay
+	"autoboot in %d seconds (stop with 'Delete' key)...\n"
 #define CONFIG_AUTOBOOT_STOP_STR	"\x1b\x5b\x33\x7e" /* 'Delete', ESC[3~ */
 #define CONFIG_ZERO_BOOTDELAY_CHECK
 
