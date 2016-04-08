@@ -824,54 +824,27 @@ void setup_arp (void) {
 
 //------------------------------------------------------------
 void setup_buf (void) {
-    int     i;
-    int	    j;
-    ULONG	adr;
-    ULONG	adr_srt;
-    ULONG	adr_end;
-    ULONG	len;
-    #ifdef SelectSimpleDA
-        int     cnt;
-        ULONG   Current_framelen;
-    #endif
+	int     i;
+	int	    j;
+	ULONG	adr;
+	ULONG	adr_srt;
+	ULONG	adr_end;
 
-    #ifdef ENABLE_ARP_2_WOL
-    int	    DA[3];
-
-	DA[0] =  ( ( SelectWOLDA_DatH >>  8 ) & 0x00ff ) |
-	         ( ( SelectWOLDA_DatH <<  8 ) & 0xff00 );
-
-	DA[1] =  ( ( SelectWOLDA_DatL >> 24 ) & 0x00ff ) |
-	         ( ( SelectWOLDA_DatL >>  8 ) & 0xff00 );
-
-	DA[2] =  ( ( SelectWOLDA_DatL >>  8 ) & 0x00ff ) |
-	         ( ( SelectWOLDA_DatL <<  8 ) & 0xff00 );
-    #endif
-
-	#ifdef  DbgPrn_FuncHeader
-	    printf ("setup_buf  : %d\n", Loop);
-	    Debug_delay();
-    #endif
-
-    // It need be multiple of 4
+	// It need be multiple of 4
 	adr_srt = GET_DMA_BASE_SETUP & 0xfffffffc;
 
 	for (j = 0; j < DES_NUMBER; j++) {
 		if ( DbgPrn_BufAdr )
-		    printf("[loop:%4d][des:%4d][setup_buf  ] %08lx\n", Loop, j, adr_srt);
+			printf("[loop:%4d][des:%4d][setup_buf  ] %08lx\n", Loop, j, adr_srt);
 
 		if ( BurstEnable ) {
 			if ( IEEETesting ) {
-                #ifdef ENABLE_DASA
 				WriteSOC_DD( adr_srt    , 0xffffffff  );
 				WriteSOC_DD( adr_srt + 4, ARP_data[1] );
 				WriteSOC_DD( adr_srt + 8, ARP_data[2] );
 
 				for (adr = (adr_srt + 12); adr < (adr_srt + DMA_PakSize); adr += 4 )
-                #else
-				for (adr = adr_srt; adr < (adr_srt + DMA_PakSize); adr += 4 )
-                #endif
-                {
+				{
 					switch( TestMode ) {
 						case 1: gdata = 0xffffffff;              break;
 						case 2: gdata = 0x55555555;              break;
@@ -879,76 +852,16 @@ void setup_buf (void) {
 						case 5: gdata = UserDVal;                break;
 					}
 					WriteSOC_DD(adr, gdata);
-				} // End for()
+				}
 			}
 			else {
 				for (i = 0; i < 16; i++) {
 					WriteSOC_DD( adr_srt + ( i << 2 ), ARP_data[i] );
 				}
 
-                #ifdef ENABLE_ARP_2_WOL
-				for (i = 16; i < 40; i += 3) {
-					WriteSOC_DD( adr_srt + ( i << 2 ),     ( DA[1] << 16 ) |  DA[0] );
-					WriteSOC_DD( adr_srt + ( i << 2 ) + 4, ( DA[0] << 16 ) |  DA[2] );
-					WriteSOC_DD( adr_srt + ( i << 2 ) + 8, ( DA[2] << 16 ) |  DA[1] );
-				}
-                #endif
-			} // End if ( IEEETesting )
+			}
 		}
 		else {
-		    // --------------------------------------------
-            #ifdef SelectSimpleData
-                #ifdef SimpleData_Fix
-			    switch( j % SimpleData_FixNum ) {
-				case  0 : gdata = SimpleData_FixVal00; break;
-				case  1 : gdata = SimpleData_FixVal01; break;
-				case  2 : gdata = SimpleData_FixVal02; break;
-				case  3 : gdata = SimpleData_FixVal03; break;
-				case  4 : gdata = SimpleData_FixVal04; break;
-				case  5 : gdata = SimpleData_FixVal05; break;
-				case  6 : gdata = SimpleData_FixVal06; break;
-				case  7 : gdata = SimpleData_FixVal07; break;
-				case  8 : gdata = SimpleData_FixVal08; break;
-				case  9 : gdata = SimpleData_FixVal09; break;
-				case 10 : gdata = SimpleData_FixVal10; break;
-				default : gdata = SimpleData_FixVal11; break;
-			    }
-                #else
-			    gdata   = 0x11111111 * ((j + SEED_START) % 256);
-                #endif
-
-			adr_end = adr_srt + DMA_PakSize;
-			for ( adr = adr_srt; adr < adr_end; adr += 4 ) {
-				WriteSOC_DD( adr, gdata );
-			}
-            // --------------------------------------------
-			#elif SelectSimpleDA
-
-			gdata   = DATA_SEED(j + SEED_START);
-			Current_framelen = FRAME_LEN[j];
-
-			if ( DbgPrn_FRAME_LEN )
-			    fprintf(fp_log, "[setup_buf      ] Current_framelen:%08lx[Des:%d][loop:%d]\n", Current_framelen, j, Loop);
-
-			cnt     = 0;
-			len     = ( ( ( Current_framelen - 14 ) & 0xff ) << 8) |
-			            ( ( Current_framelen - 14 ) >> 8 );
-
-			adr_end = adr_srt + DMA_PakSize;
-			for ( adr = adr_srt; adr < adr_end; adr += 4 ) {
-				cnt++;
-				if      (cnt == 1 ) WriteSOC_DD( adr, SelectSimpleDA_Dat0 );
-				else if (cnt == 2 ) WriteSOC_DD( adr, SelectSimpleDA_Dat1 );
-				else if (cnt == 3 ) WriteSOC_DD( adr, SelectSimpleDA_Dat2 );
-				else if (cnt == 4 ) WriteSOC_DD( adr, len | (len << 16)   );
-				else
-				    WriteSOC_DD( adr, gdata );
-
-				gdata += DATA_IncVal;
-			}
-            // --------------------------------------------
-			#else
-
 			gdata   = DATA_SEED(j + SEED_START);
 			adr_end = adr_srt + DMA_PakSize;
 			for ( adr = adr_srt; adr < adr_end; adr += 4 ) {
@@ -956,133 +869,74 @@ void setup_buf (void) {
 
 				gdata += DATA_IncVal;
 			}
-
-			#endif
-
-		} // End if ( BurstEnable )
+		}
 
 		adr_srt += DMA_PakSize;
-	} // End for (j = 0; j < DES_NUMBER; j++)
-} // End void setup_buf (void)
+	}
+}
 
 //------------------------------------------------------------
 // Check data of one packet
 //------------------------------------------------------------
-char check_Data (ULONG desadr, LONG number) {
-	int	    index;
-	int     cnt;
-    ULONG	rdata;
-    ULONG	wp_lst_cur;
-    ULONG	adr_las;
-    ULONG	adr;
-    ULONG	adr_srt;
-    ULONG	adr_end;
-    ULONG	len;
-    #ifdef SelectSimpleDA
-        ULONG   gdata_bak;
-    #endif
-
-	#ifdef  DbgPrn_FuncHeader
-	    printf ("check_Data : %d\n", Loop);
-	    Debug_delay();
-    #endif
-    //printf("[Des:%d][loop:%d]Desadr:%08x\n", number, Loop, desadr);
+char check_Data(ULONG desadr, LONG number) {
+	int	i;
+	ULONG	rdata;
+	ULONG	wp_lst_cur;
+	ULONG	adr_las;
+	ULONG	adr;
+	ULONG	adr_srt;
+	ULONG	adr_end;
 
 	wp_lst_cur    = wp_lst[number];
 	FRAME_LEN_Cur = FRAME_LEN[number];
 	adr_srt = ReadSOC_DD(desadr) & 0xfffffffc;
 	adr_end = adr_srt + PktByteSize;
 
-    #ifdef SelectSimpleData
-        #ifdef SimpleData_Fix
-	switch( number % SimpleData_FixNum ) {
-		case  0 : gdata = SimpleData_FixVal00; break;
-		case  1 : gdata = SimpleData_FixVal01; break;
-		case  2 : gdata = SimpleData_FixVal02; break;
-		case  3 : gdata = SimpleData_FixVal03; break;
-		case  4 : gdata = SimpleData_FixVal04; break;
-		case  5 : gdata = SimpleData_FixVal05; break;
-		case  6 : gdata = SimpleData_FixVal06; break;
-		case  7 : gdata = SimpleData_FixVal07; break;
-		case  8 : gdata = SimpleData_FixVal08; break;
-		case  9 : gdata = SimpleData_FixVal09; break;
-		case 10 : gdata = SimpleData_FixVal10; break;
-		default : gdata = SimpleData_FixVal11; break;
-	}
-        #else
-	gdata   = 0x11111111 * ((number + SEED_START) % 256);
-        #endif
-    #else
 	gdata   = DATA_SEED(number + SEED_START);
-    #endif
 
 	wp      = wp_fir;
 	adr_las = adr_end - 4;
 
-	cnt     = 0;
-	len     = (((FRAME_LEN_Cur-14) & 0xff) << 8) | ((FRAME_LEN_Cur-14) >> 8);
 	for (adr = adr_srt; adr < adr_end; adr+=4) {
-
-        #ifdef SelectSimpleDA
-		cnt++;
-		if      ( cnt == 1 ) { gdata_bak = gdata; gdata = SelectSimpleDA_Dat0; }
-		else if ( cnt == 2 ) { gdata_bak = gdata; gdata = SelectSimpleDA_Dat1; }
-		else if ( cnt == 3 ) { gdata_bak = gdata; gdata = SelectSimpleDA_Dat2; }
-		else if ( cnt == 4 ) { gdata_bak = gdata; gdata = len | (len << 16);   }
-        #endif
 		rdata = ReadSOC_DD(adr);
 		if (adr == adr_las)
-		    wp = wp & wp_lst_cur;
+			wp = wp & wp_lst_cur;
 
 		if ( (rdata & wp) != (gdata & wp) ) {
-			for (index = 0; index < 6; index++) {
+			for (i = 0; i < 6; i++) {
 				rdata = ReadSOC_DD(adr);
-            }
+			}
 
 			if ( DbgPrn_DumpMACCnt )
-			    dump_mac_ROreg();
+				dump_mac_ROreg();
 
-			return( FindErr( Err_Check_Buf_Data ) );
-		} // End if ( (rdata & wp) != (gdata & wp) )
-        #ifdef SelectSimpleDA
-		if ( cnt <= 4 )
-		    gdata = gdata_bak;
-        #endif
+			return FindErr(Err_Check_Buf_Data);
+		}
 
-        #ifdef SelectSimpleData
-        #else
 		gdata += DATA_IncVal;
-        #endif
 
 		wp     = 0xffffffff;
 	}
-	return(0);
-} // End char check_Data (ULONG desadr, LONG number)
+	return 0;
+}
 
 //------------------------------------------------------------
 char check_buf (int loopcnt) {
     int	    count;
     ULONG	desadr;
 
-	#ifdef  DbgPrn_FuncHeader
-	    printf ("check_buf  : %d\n", Loop);
-	    Debug_delay();
-    #endif
+    for ( count = DES_NUMBER - 1; count >= 0; count-- ) {
+	    desadr = H_RDES_BASE + ( 16 * count ) + 12;
+	    if (check_Data(desadr, count)) {
+		    check_int ("");
+		    return 1;
+	    }
+    }
+    if ( check_int ("") )
+	    return 1;
 
-	for ( count = DES_NUMBER - 1; count >= 0; count-- ) {
-		desadr = H_RDES_BASE + ( 16 * count ) + 12;
-        //printf("%d:%08x\n", count, desadr);
-		if (check_Data(desadr, count)) {
-			check_int ("");
-
-			return(1);
-		}
-	}
-	if ( check_int ("") )
-	    return(1);
-
-	return(0);
-} // End char check_buf (int loopcnt)
+    return 0;
+}
 
 //------------------------------------------------------------
 // Descriptor

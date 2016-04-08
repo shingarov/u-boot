@@ -623,7 +623,6 @@ void Get_Controller_Packet_Statistics (void) {//Command:0x18
 
 //------------------------------------------------------------
 char phy_ncsi (void) {
-    ULONG   Channel_Found = 0;
     ULONG   Package_Found = 0;
     ULONG   Re_Send;
     ULONG   Err_Flag_bak;
@@ -704,7 +703,6 @@ char phy_ncsi (void) {
                 NCSI_LinkFail_Val_bak = NCSI_LinkFail_Val;
                 if (Clear_Initial_State_SLT(chl_idx) == 0) { //Command:0x00
                     number_chl++;
-                    Channel_Found       = 1;
                     NCSI_Cap_SLT.Channel_ID = chl_idx;
 
                     if ( !(IOTiming || IOTimingBund) )
@@ -782,7 +780,6 @@ char phy_ncsi (void) {
     if ( !Package_Found              ) FindErr( Err_NCSI_No_PHY      );
     if ( ChannelTolNum != number_chl ) FindErr( Err_NCSI_Channel_Num );
     if ( PackageTolNum != number_pak ) FindErr( Err_NCSI_Package_Num );
-//  if ( !Channel_Found) FindErr();
 
     if ( Err_Flag )
         return(1);
