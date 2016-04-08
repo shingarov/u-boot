@@ -146,7 +146,7 @@ static void enable4b (flash_info_t * info);
 static void enable4b_spansion (flash_info_t * info);
 static void enable4b_numonyx (flash_info_t * info);
 static ulong flash_get_size (ulong base, int banknum);
-static int flash_write_buffer (flash_info_t *info, uchar *src, ulong addr, int len);
+static void flash_write_buffer (flash_info_t *info, uchar *src, ulong addr, int len);
 #if defined(CFG_ENV_IS_IN_FLASH) || defined(CFG_ENV_ADDR_REDUND) || (CFG_MONITOR_BASE >= CFG_FLASH_BASE)
 static flash_info_t *flash_get_info(ulong base);
 #endif
@@ -167,13 +167,6 @@ inline uchar* flash_make_addr (flash_info_t * info, flash_sect_t sect, uint offs
 #endif
 }
 
-/*-----------------------------------------------------------------------
- * read a character at a port width address
- */
-inline uchar flash_read_uchar (flash_info_t * info, uint offset)
-{
-	return flash_make_addr (info, 0, offset);
-}
 
 /*-----------------------------------------------------------------------
  * read a short word by swapping for ppc format.
@@ -224,18 +217,14 @@ static void reset_flash (flash_info_t * info)
 
 static void enable_write (flash_info_t * info)
 {
-	ulong base;
+	uchar *base;
         ulong ulCtrlData, CtrlOffset;
         uchar jReg;
 
         if (info->CE == 2)
-        {
             CtrlOffset = SPICtrlRegOffset2;
-        }
         else
-        {
             CtrlOffset = SPICtrlRegOffset;
-        }
 
 	//base = info->start[0];
 	base = flash_make_addr (info, 0, 0);
@@ -244,7 +233,7 @@ static void enable_write (flash_info_t * info)
         ulCtrlData |= CE_LOW | USERMODE;
         *(ulong *) (STCBaseAddress + CtrlOffset) = ulCtrlData;
         udelay(200);
-        *(uchar *) (base) = (uchar) (0x06);
+        *base = 0x06;
         udelay(10);
         ulCtrlData &= CMD_MASK;
         ulCtrlData |= CE_HIGH | USERMODE;
@@ -255,7 +244,7 @@ static void enable_write (flash_info_t * info)
         ulCtrlData |= CE_LOW | USERMODE;
         *(ulong *) (STCBaseAddress + CtrlOffset) = ulCtrlData;
         udelay(200);
-        *(uchar *) (base) = (uchar) (0x05);
+        *base = 0x05;
         udelay(10);
         do {
             jReg = *(volatile uchar *) (base);
@@ -269,18 +258,14 @@ static void enable_write (flash_info_t * info)
 
 static void write_status_register (flash_info_t * info, uchar data)
 {
-	ulong base;
-        ulong ulSMMBase, ulCtrlData, CtrlOffset;
+	uchar *base;
+        ulong ulCtrlData, CtrlOffset;
         uchar jReg;
 
         if (info->CE == 2)
-        {
             CtrlOffset = SPICtrlRegOffset2;
-        }
         else
-        {
             CtrlOffset = SPICtrlRegOffset;
-        }
 
 	//base = info->start[0];
 	base = flash_make_addr (info, 0, 0);
@@ -291,9 +276,9 @@ static void write_status_register (flash_info_t * info, uchar data)
         ulCtrlData |= CE_LOW | USERMODE;
         *(ulong *) (STCBaseAddress + CtrlOffset) = ulCtrlData;
         udelay(200);
-        *(uchar *) (base) = (uchar) (0x01);
+        *base = 0x01;
         udelay(10);
-        *(uchar *) (base) = (uchar) (data);
+        *base = data;
         ulCtrlData &= CMD_MASK;
         ulCtrlData |= CE_HIGH | USERMODE;
         *(ulong *) (STCBaseAddress + CtrlOffset) = ulCtrlData;
@@ -303,7 +288,7 @@ static void write_status_register (flash_info_t * info, uchar data)
         ulCtrlData |= CE_LOW | USERMODE;
         *(ulong *) (STCBaseAddress + CtrlOffset) = ulCtrlData;
         udelay(200);
-        *(uchar *) (base) = (uchar) (0x05);
+        *base = 0x05;
         udelay(10);
         do {
             jReg = *(volatile uchar *) (base);
@@ -317,18 +302,13 @@ static void write_status_register (flash_info_t * info, uchar data)
 
 static void enable4b (flash_info_t * info)
 {
-	ulong base;
-        ulong ulSMMBase, ulCtrlData, CtrlOffset;
-        uchar jReg;
+	uchar *base;
+        ulong ulCtrlData, CtrlOffset;
 
         if (info->CE == 2)
-        {
             CtrlOffset = SPICtrlRegOffset2;
-        }
         else
-        {
             CtrlOffset = SPICtrlRegOffset;
-        }
 
 	//base = info->start[0];
 	base = flash_make_addr (info, 0, 0);
@@ -337,7 +317,7 @@ static void enable4b (flash_info_t * info)
         ulCtrlData |= CE_LOW | USERMODE;
         *(ulong *) (STCBaseAddress + CtrlOffset) = ulCtrlData;
         udelay(200);
-        *(uchar *) (base) = (uchar) (0xb7);
+        *base = 0xb7;
         ulCtrlData &= CMD_MASK;
         ulCtrlData |= CE_HIGH | USERMODE;
         *(ulong *) (STCBaseAddress + CtrlOffset) = ulCtrlData;
@@ -347,20 +327,15 @@ static void enable4b (flash_info_t * info)
 
 static void enable4b_spansion (flash_info_t * info)
 {
-	ulong base;
-	ulong ulSMMBase, ulCtrlData, CtrlOffset;
+	uchar *base;
+	ulong ulCtrlData, CtrlOffset;
 	uchar jReg;
 
 	if (info->CE == 2)
-	{
             CtrlOffset = SPICtrlRegOffset2;
-	}
 	else
-	{
             CtrlOffset = SPICtrlRegOffset;
-	}
 
-	//base = info->start[0];
 	base = flash_make_addr (info, 0, 0);
 
 	/* Enable 4B: BAR0 D[7] = 1 */
@@ -368,9 +343,9 @@ static void enable4b_spansion (flash_info_t * info)
 	ulCtrlData |= CE_LOW | USERMODE;
 	*(ulong *) (STCBaseAddress + CtrlOffset) = ulCtrlData;
 	udelay(200);
-	*(uchar *) (base) = (uchar) (0x17);
+	*base = 0x17;
 	udelay(10);
-	*(uchar *) (base) = (uchar) (0x80);
+	*base = 0x80;
 	ulCtrlData &= CMD_MASK;
 	ulCtrlData |= CE_HIGH | USERMODE;
 	*(ulong *) (STCBaseAddress + CtrlOffset) = ulCtrlData;
@@ -380,7 +355,7 @@ static void enable4b_spansion (flash_info_t * info)
 	ulCtrlData |= CE_LOW | USERMODE;
 	*(ulong *) (STCBaseAddress + CtrlOffset) = ulCtrlData;
 	udelay(200);
-	*(uchar *) (base) = (uchar) (0x16);
+	*base = 0x16;
 	udelay(10);
 	do {
             jReg = *(volatile uchar *) (base);
@@ -394,20 +369,14 @@ static void enable4b_spansion (flash_info_t * info)
 
 static void enable4b_numonyx (flash_info_t * info)
 {
-	ulong base;
-	ulong ulSMMBase, ulCtrlData, CtrlOffset;
-	uchar jReg;
+	uchar *base;
+	ulong ulCtrlData, CtrlOffset;
 
 	if (info->CE == 2)
-	{
             CtrlOffset = SPICtrlRegOffset2;
-	}
 	else
-	{
             CtrlOffset = SPICtrlRegOffset;
-	}
 
-	//base = info->start[0];
 	base = flash_make_addr (info, 0, 0);
 
 	/* Enable Write */
@@ -418,7 +387,7 @@ static void enable4b_numonyx (flash_info_t * info)
 	ulCtrlData |= CE_LOW | USERMODE;
 	*(ulong *) (STCBaseAddress + CtrlOffset) = ulCtrlData;
 	udelay(200);
-	*(uchar *) (base) = (uchar) (0xB7);
+	*base = 0xB7;
 	udelay(10);
 	ulCtrlData &= CMD_MASK;
 	ulCtrlData |= CE_HIGH | USERMODE;
@@ -441,7 +410,7 @@ static ulong flash_get_size (ulong base, int banknum)
         uchar ch[3];
         ulong cpuclk, div, reg;
         ulong WriteClk, EraseClk, ReadClk;
-        ulong vbase;
+        uchar *vbase;
         ulong SCURevision;
 
         ulong ulRefPLL;
@@ -460,7 +429,7 @@ static ulong flash_get_size (ulong base, int banknum)
         ulCtrlData |= CE_LOW | USERMODE;
         *(ulong *) (STCBaseAddress + CtrlOffset) = ulCtrlData;
         udelay(200);
-        *(uchar *) (vbase) = (uchar) (0x9F);
+        *vbase = 0x9F;
         udelay(10);
         ch[0] = *(volatile uchar *)(vbase);
         udelay(10);
@@ -475,7 +444,7 @@ static ulong flash_get_size (ulong base, int banknum)
         ulID = ((ulong)ch[0]) | ((ulong)ch[1] << 8) | ((ulong)ch[2] << 16) ;
         info->flash_id = ulID;
 
-        printf("SPI Flash ID: %x \n", ulID);
+        printf("SPI Flash ID: %lx \n", ulID);
 
         /* init default */
         info->iomode = IOMODEx1;
@@ -1026,23 +995,19 @@ AST2300 A0 SPI can't run faster than 50Mhz
 	return info->size;
 }
 
-static int flash_write_buffer (flash_info_t *info, uchar *src, ulong addr, int len)
+static void flash_write_buffer (flash_info_t *info, uchar *src, ulong addr, int len)
 {
-        ulong j, base, offset;
-        ulong ulSMMBase, ulCtrlData, CtrlOffset;
+        ulong j, offset;
+	uchar *base;
+        ulong ulCtrlData, CtrlOffset;
         uchar jReg;
 
         if (info->CE == 2)
-        {
             CtrlOffset = SPICtrlRegOffset2;
-        }
         else
-        {
             CtrlOffset = SPICtrlRegOffset;
-        }
 
-	base = info->start[0];
-	offset = addr - base;
+	offset = addr - info->start[0];
 	base = flash_make_addr (info, 0, 0);
 
         enable_write (info);
@@ -1053,23 +1018,22 @@ static int flash_write_buffer (flash_info_t *info, uchar *src, ulong addr, int l
         ulCtrlData |= CE_LOW | USERMODE;
         *(ulong *) (STCBaseAddress + CtrlOffset) = ulCtrlData;
         udelay(200);
-        *(uchar *) (base) = (uchar) (0x02);
+        *base = 0x02;
         udelay(10);
-        if (info->address32)
-        {
-            *(uchar *) (base) = (uchar) ((offset & 0xff000000) >> 24);
+        if (info->address32) {
+            *base = (uchar) ((offset & 0xff000000) >> 24);
             udelay(10);
         }
-        *(uchar *) (base) = (uchar) ((offset & 0xff0000) >> 16);
+        *base = (uchar) ((offset & 0xff0000) >> 16);
         udelay(10);
-        *(uchar *) (base) = (uchar) ((offset & 0x00ff00) >> 8);
+        *base = (uchar) ((offset & 0x00ff00) >> 8);
         udelay(10);
-        *(uchar *) (base) = (uchar) ((offset & 0x0000ff));
+        *base = (uchar) ((offset & 0x0000ff));
         udelay(10);
 
         for (j=0; j<len; j++)
         {
-            *(uchar *) (base) = *(uchar *) (src++);
+            *base = *(uchar *) (src++);
             udelay(10);
         }
 
@@ -1082,7 +1046,7 @@ static int flash_write_buffer (flash_info_t *info, uchar *src, ulong addr, int l
         ulCtrlData |= CE_LOW | USERMODE;
         *(ulong *) (STCBaseAddress + CtrlOffset) = ulCtrlData;
         udelay(200);
-        *(uchar *) (base) = (uchar) (0x05);
+        *base = 0x05;
         udelay(10);
         do {
             jReg = *(volatile uchar *) (base);
@@ -1099,7 +1063,7 @@ static int flash_write_buffer (flash_info_t *info, uchar *src, ulong addr, int l
             ulCtrlData |= CE_LOW | USERMODE;
             *(ulong *) (STCBaseAddress + CtrlOffset) = ulCtrlData;
             udelay(200);
-            *(uchar *) (base) = (uchar) (0x70);
+            *base = 0x70;
             udelay(10);
             do {
                 jReg = *(volatile uchar *) (base);
@@ -1175,8 +1139,9 @@ int flash_erase (flash_info_t * info, int s_first, int s_last)
 	int prot;
 	flash_sect_t sect;
 
-        ulong base, offset;
-        ulong ulSMMBase, ulCtrlData, CtrlOffset;
+        ulong offset;
+	uchar *base;
+        ulong ulCtrlData, CtrlOffset;
         uchar jReg;
 
         if (info->CE == 2)
@@ -1211,26 +1176,25 @@ int flash_erase (flash_info_t * info, int s_first, int s_last)
                         /* start erasing */
                         enable_write(info);
 
-	                base = info->start[0];
-                        offset = info->start[sect] - base;
+                        offset = info->start[sect] - info->start[0];
 	                base = flash_make_addr (info, 0, 0);
 
                         ulCtrlData &= CMD_MASK;
                         ulCtrlData |= CE_LOW | USERMODE;
                         *(ulong *) (STCBaseAddress + CtrlOffset) = ulCtrlData;
                         udelay(200);
-                        *(uchar *) (base) = (uchar) (0xd8);
+                        *base = (uchar) (0xd8);
                         udelay(10);
                         if (info->address32)
                         {
                             *(uchar *) (base) = (uchar) ((offset & 0xff000000) >> 24);
                             udelay(10);
                         }
-                        *(uchar *) (base) = (uchar) ((offset & 0xff0000) >> 16);
+                        *base = (uchar) ((offset & 0xff0000) >> 16);
                         udelay(10);
-                        *(uchar *) (base) = (uchar) ((offset & 0x00ff00) >> 8);
+                        *base = (uchar) ((offset & 0x00ff00) >> 8);
                         udelay(10);
-                        *(uchar *) (base) = (uchar) ((offset & 0x0000ff));
+                        *base = (uchar) ((offset & 0x0000ff));
                         udelay(10);
 
                         ulCtrlData &= CMD_MASK;
@@ -1242,7 +1206,7 @@ int flash_erase (flash_info_t * info, int s_first, int s_last)
                         ulCtrlData |= CE_LOW | USERMODE;
                         *(ulong *) (STCBaseAddress + CtrlOffset) = ulCtrlData;
                         udelay(200);
-                        *(uchar *) (base) = (uchar) (0x05);
+                        *base = (uchar) (0x05);
                         udelay(10);
                         do {
                             jReg = *(volatile uchar *) (base);
@@ -1259,7 +1223,7 @@ int flash_erase (flash_info_t * info, int s_first, int s_last)
                             ulCtrlData |= CE_LOW | USERMODE;
                             *(ulong *) (STCBaseAddress + CtrlOffset) = ulCtrlData;
                             udelay(200);
-                            *(uchar *) (base) = (uchar) (0x70);
+                            *base = (uchar) (0x70);
                             udelay(10);
                             do {
                                 jReg = *(volatile uchar *) (base);
@@ -1298,7 +1262,7 @@ int write_buff (flash_info_t * info, uchar * src, ulong addr, ulong cnt)
 {
 	int count;
 	unsigned char pat[] = {'|', '-', '/', '\\'};
-	int patcnt;
+	int patcnt = 0;
 
 	/* get lower aligned address */
         if (addr & (info->buffersize - 1))
