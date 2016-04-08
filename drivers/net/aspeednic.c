@@ -17,6 +17,7 @@
 #include <net.h>
 #include <pci.h>
 #include <linux/mii.h>
+#include <miiphy.h>
 
 
 /*
@@ -28,11 +29,7 @@
 */
 #define pci_find_devices         NULL
 #define pci_read_config_dword    NULL
-#if defined(CONFIG_AST1300)
-#define SCU_BASE                 CONFIG_SCUREG_BASE
-#else
 #define SCU_BASE                 0x1E6E2000
-#endif
 #define SCU_RESET_CONTROL        0x04
 #define SCU_CLOCK_SELECTION      0x08
 #define SCU_CLOCK_CONTROL        0x0C
@@ -49,25 +46,16 @@
 #define MAC1_CLOCK_ENABLE        (1 << 20)
 #define MAC2_CLOCK_ENABLE        (1 << 21)
 #define MAC_AHB_CLOCK_DIVIDER    (0x07 << 16)
-#if defined(CONFIG_AST2300_FPGA_2) || defined(CONFIG_AST2300) || defined(CONFIG_AST3100) || defined(CONFIG_AST2400)
 #define MAC1_MDIO                (1 << 31)
 #define MAC1_MDC                 (1 << 30)
 #define MAC1_PHY_LINK            (1 << 0)
 #define MAC2_MDC_MDIO            (1 << 2)
 #define MAC2_PHY_LINK            (1 << 1)
-#else
-#define MAC2_MDC_MDIO            (1 << 20)
-#define MAC2_MII                 (1 << 21)
-#define MAC1_PHY_LINK            (1 << 25)
-#define MAC2_PHY_LINK            (1 << 26)
-#endif
 
-#if defined(CONFIG_AST1300)
-unsigned int aspeednic_iobase[1] = {CONFIG_MACREG_BASE};
-#else
-unsigned int aspeednic_iobase[CONFIG_ASPEED_MAC_NUMBER] = {
-  0x1E660000, 0x1E680000};
-#endif
+unsigned int aspeednic_iobase[] = {
+	0x1E660000,
+	0x1E680000
+};
 
 /* PHY address */
 static u8 g_phy_addr = 0;
@@ -408,7 +396,7 @@ static unsigned int InstanceID = 0;
 static int Retry = 0;
 
 static int   aspeednic_init(struct eth_device* dev, bd_t* bis);
-static int   aspeednic_send(struct eth_device* dev, volatile void *packet, int length);
+static int   aspeednic_send(struct eth_device* dev, void *packet, int length);
 static int   aspeednic_recv(struct eth_device* dev);
 static void  aspeednic_halt(struct eth_device* dev);
 static int   aspeednic_write_hwaddr(struct eth_device* dev);
@@ -466,121 +454,94 @@ void NCSI_Struct_Initialize(void)
 
 int aspeednic_initialize(bd_t *bis)
 {
-  int               card_number = CONFIG_ASPEED_MAC_CONFIG - 1;
-  unsigned int    iobase, SCURegister;
-  struct eth_device*  dev;
+	int card_number = CONFIG_ASPEED_MAC_CONFIG - 1;
+	unsigned int iobase, SCURegister;
+	struct eth_device*  dev;
 
-#if defined(CONFIG_AST2300_FPGA_2) || defined(CONFIG_AST2300) || defined(CONFIG_AST3100) || defined(CONFIG_AST2400)
-//AST2300
-//MAC1 CLOCK/RESET/PHY_LINK/MDC_MDIO in SCU
-  SCURegister = le32_to_cpu(*(volatile u_long *)(SCU_BASE + SCU_RESET_CONTROL));
-  *(volatile u_long *)(SCU_BASE + SCU_RESET_CONTROL) = cpu_to_le32(SCURegister | 0x800);
-  udelay(100);
-  SCURegister = le32_to_cpu(*(volatile u_long *)(SCU_BASE + SCU_CLOCK_CONTROL));
-  *(volatile u_long *)(SCU_BASE + SCU_CLOCK_CONTROL) = cpu_to_le32(SCURegister & ~(MAC1_CLOCK_ENABLE));
-  udelay(10000);
-//Add Clock Selection in AST2300 A1, Please check the datasheet for more detail
-//The current sample code uses 0: H-PLL/2 because all EVBs have RGMII interface
-//        SCURegister = le32_to_cpu(*(volatile u_long *)(SCU_BASE + SCU_CLOCK_SELECTION));
-//  *(volatile u_long *)(SCU_BASE + SCU_CLOCK_SELECTION) = cpu_to_le32(SCURegister & ~(MAC_AHB_CLOCK_DIVIDER));
-  SCURegister = le32_to_cpu(*(volatile u_long *)(SCU_BASE + SCU_RESET_CONTROL));
-  *(volatile u_long *)(SCU_BASE + SCU_RESET_CONTROL) = cpu_to_le32(SCURegister & ~(0x800));
-  SCURegister = le32_to_cpu(*(volatile u_long *)(SCU_BASE + SCU_MULTIFUNCTION_PIN_CTL3_REG));
-  *(volatile u_long *)(SCU_BASE + SCU_MULTIFUNCTION_PIN_CTL3_REG) = cpu_to_le32(SCURegister | (MAC1_MDIO | MAC1_MDC));
-//        SCURegister = le32_to_cpu(*(volatile u_long *)(SCU_BASE + SCU_MAC_CLOCK_DELAY));
-//Currently we use fix value in MAC timing on EVB
-//  *(volatile u_long *)(SCU_BASE + SCU_MAC_CLOCK_DELAY) = CONFIG_MAC_INTERFACE_CLOCK_DELAY;
+	//AST2300
+	//MAC1 CLOCK/RESET/PHY_LINK/MDC_MDIO in SCU
+	SCURegister = le32_to_cpu(*(volatile u_long *)(SCU_BASE + SCU_RESET_CONTROL));
+	*(volatile u_long *)(SCU_BASE + SCU_RESET_CONTROL) = cpu_to_le32(SCURegister | 0x800);
+	udelay(100);
+	SCURegister = le32_to_cpu(*(volatile u_long *)(SCU_BASE + SCU_CLOCK_CONTROL));
+	*(volatile u_long *)(SCU_BASE + SCU_CLOCK_CONTROL) = cpu_to_le32(SCURegister & ~(MAC1_CLOCK_ENABLE));
+	udelay(10000);
+	//Add Clock Selection in AST2300 A1, Please check the datasheet for more detail
+	//The current sample code uses 0: H-PLL/2 because all EVBs have RGMII interface
+	//        SCURegister = le32_to_cpu(*(volatile u_long *)(SCU_BASE + SCU_CLOCK_SELECTION));
+	//  *(volatile u_long *)(SCU_BASE + SCU_CLOCK_SELECTION) = cpu_to_le32(SCURegister & ~(MAC_AHB_CLOCK_DIVIDER));
+	SCURegister = le32_to_cpu(*(volatile u_long *)(SCU_BASE + SCU_RESET_CONTROL));
+	*(volatile u_long *)(SCU_BASE + SCU_RESET_CONTROL) = cpu_to_le32(SCURegister & ~(0x800));
+	SCURegister = le32_to_cpu(*(volatile u_long *)(SCU_BASE + SCU_MULTIFUNCTION_PIN_CTL3_REG));
+	*(volatile u_long *)(SCU_BASE + SCU_MULTIFUNCTION_PIN_CTL3_REG) = cpu_to_le32(SCURegister | (MAC1_MDIO | MAC1_MDC));
+	//        SCURegister = le32_to_cpu(*(volatile u_long *)(SCU_BASE + SCU_MAC_CLOCK_DELAY));
+	//Currently we use fix value in MAC timing on EVB
+	//  *(volatile u_long *)(SCU_BASE + SCU_MAC_CLOCK_DELAY) = CONFIG_MAC_INTERFACE_CLOCK_DELAY;
 #ifdef CONFIG_MAC1_PHY_LINK_INTERRUPT
-  SCURegister = le32_to_cpu(*(volatile u_long *)(SCU_BASE + SCU_MULTIFUNCTION_PIN_CTL1_REG));
-  *(volatile u_long *)(SCU_BASE + SCU_MULTIFUNCTION_PIN_CTL1_REG) = cpu_to_le32(SCURegister | (MAC1_PHY_LINK));
+	SCURegister = le32_to_cpu(*(volatile u_long *)(SCU_BASE + SCU_MULTIFUNCTION_PIN_CTL1_REG));
+	*(volatile u_long *)(SCU_BASE + SCU_MULTIFUNCTION_PIN_CTL1_REG) = cpu_to_le32(SCURegister | (MAC1_PHY_LINK));
 #endif
 
-//MAC2 CLOCK/RESET/PHY_LINK/MDC_MDIO
+	//MAC2 CLOCK/RESET/PHY_LINK/MDC_MDIO
 #ifdef CONFIG_MAC2_ENABLE
-  SCURegister = le32_to_cpu(*(volatile u_long *)(SCU_BASE + SCU_RESET_CONTROL));
-  *(volatile u_long *)(SCU_BASE + SCU_RESET_CONTROL) = cpu_to_le32(SCURegister | 0x1000);
-  udelay(10);
-  SCURegister = le32_to_cpu(*(volatile u_long *)(SCU_BASE + SCU_CLOCK_CONTROL));
-  *(volatile u_long *)(SCU_BASE + SCU_CLOCK_CONTROL) = cpu_to_le32(SCURegister & ~(MAC2_CLOCK_ENABLE));
-  udelay(10000);
-  SCURegister = le32_to_cpu(*(volatile u_long *)(SCU_BASE + SCU_RESET_CONTROL));
-  *(volatile u_long *)(SCU_BASE + SCU_RESET_CONTROL) = cpu_to_le32(SCURegister & ~(0x1000));
-  SCURegister = le32_to_cpu(*(volatile u_long *)(SCU_BASE + SCU_MULTIFUNCTION_PIN_CTL5_REG));
-  *(volatile u_long *)(SCU_BASE + SCU_MULTIFUNCTION_PIN_CTL5_REG) = cpu_to_le32(SCURegister | (MAC2_MDC_MDIO));
+	SCURegister = le32_to_cpu(*(volatile u_long *)(SCU_BASE + SCU_RESET_CONTROL));
+	*(volatile u_long *)(SCU_BASE + SCU_RESET_CONTROL) = cpu_to_le32(SCURegister | 0x1000);
+	udelay(10);
+	SCURegister = le32_to_cpu(*(volatile u_long *)(SCU_BASE + SCU_CLOCK_CONTROL));
+	*(volatile u_long *)(SCU_BASE + SCU_CLOCK_CONTROL) = cpu_to_le32(SCURegister & ~(MAC2_CLOCK_ENABLE));
+	udelay(10000);
+	SCURegister = le32_to_cpu(*(volatile u_long *)(SCU_BASE + SCU_RESET_CONTROL));
+	*(volatile u_long *)(SCU_BASE + SCU_RESET_CONTROL) = cpu_to_le32(SCURegister & ~(0x1000));
+	SCURegister = le32_to_cpu(*(volatile u_long *)(SCU_BASE + SCU_MULTIFUNCTION_PIN_CTL5_REG));
+	*(volatile u_long *)(SCU_BASE + SCU_MULTIFUNCTION_PIN_CTL5_REG) = cpu_to_le32(SCURegister | (MAC2_MDC_MDIO));
 #endif
 #ifdef CONFIG_MAC2_PHY_LINK_INTERRUPT
-  SCURegister = le32_to_cpu(*(volatile u_long *)(SCU_BASE + SCU_MULTIFUNCTION_PIN_CTL1_REG));
-  *(volatile u_long *)(SCU_BASE + SCU_MULTIFUNCTION_PIN_CTL1_REG) = cpu_to_le32(SCURegister | (MAC2_PHY_LINK));
-#endif
-#else
-//AST1100/AST2050/AST2100
-//MAC1 RESET/PHY_LINK in SCU
-  SCURegister = le32_to_cpu(*(volatile u_long *)(SCU_BASE + SCU_RESET_CONTROL));
-  *(volatile u_long *)(SCU_BASE + SCU_RESET_CONTROL) = cpu_to_le32(SCURegister & ~(0x800));
-#ifdef CONFIG_MAC1_PHY_LINK_INTERRUPT
-  SCURegister = le32_to_cpu(*(volatile u_long *)(SCU_BASE + SCU_PIN_MUX));
-  *(volatile u_long *)(SCU_BASE + SCU_PIN_MUX) = cpu_to_le32(SCURegister | (MAC1_PHY_LINK));
+	SCURegister = le32_to_cpu(*(volatile u_long *)(SCU_BASE + SCU_MULTIFUNCTION_PIN_CTL1_REG));
+	*(volatile u_long *)(SCU_BASE + SCU_MULTIFUNCTION_PIN_CTL1_REG) = cpu_to_le32(SCURegister | (MAC2_PHY_LINK));
 #endif
 
-//MAC2
-#ifdef CONFIG_MAC2_ENABLE
-  SCURegister = le32_to_cpu(*(volatile u_long *)(SCU_BASE + SCU_RESET_CONTROL));
-  *(volatile u_long *)(SCU_BASE + SCU_RESET_CONTROL) = cpu_to_le32(SCURegister & ~(0x1000));
-  SCURegister = le32_to_cpu(*(volatile u_long *)(SCU_BASE + SCU_PIN_MUX));
-  *(volatile u_long *)(SCU_BASE + SCU_PIN_MUX) = cpu_to_le32(SCURegister | (MAC2_MDC_MDIO));
-#endif
-#ifdef CONFIG_MAC2_MII_ENABLE
-  SCURegister = le32_to_cpu(*(volatile u_long *)(SCU_BASE + SCU_PIN_MUX));
-  *(volatile u_long *)(SCU_BASE + SCU_PIN_MUX) = cpu_to_le32(SCURegister | (MAC2_MII));
-#endif
-#ifdef CONFIG_MAC2_PHY_LINK_INTERRUPT
-  SCURegister = le32_to_cpu(*(volatile u_long *)(SCU_BASE + SCU_PIN_MUX));
-  *(volatile u_long *)(SCU_BASE + SCU_PIN_MUX) = cpu_to_le32(SCURegister | (MAC2_PHY_LINK));
-#endif
-#endif
+	iobase = aspeednic_iobase[card_number];
 
-  iobase = aspeednic_iobase[card_number];
-
-  dev = &aspeednic_device[card_number];
+	dev = &aspeednic_device[card_number];
 
 
-  sprintf(dev->name, "aspeednic#%d", card_number);
+	sprintf(dev->name, "aspeednic#%d", card_number);
 
-  dev->iobase = iobase;
+	dev->iobase = iobase;
 
-  if (CONFIG_ASPEED_MAC_PHY_SETTING >= 1) {
-//NCSI Struct Initialize
-    NCSI_Struct_Initialize();
-  }
-//Set Scratch register (0x1E6E2040 D[15:14])(0x1E6E2041 D[7:6]) to inform kernel MAC1 driver
-  SCURegister = le32_to_cpu(*(volatile u_long *)(SCU_BASE + SCU_SCRATCH_REGISTER));
-  *(volatile u_long *)(SCU_BASE + SCU_SCRATCH_REGISTER) = cpu_to_le32((SCURegister & ~(0xc000)) | (CONFIG_MAC1_PHY_SETTING << 14));
-//Set Scratch register (0x1E6E2040 D[13:12])(0x1E6E2041 D[5:4]) to inform kernel MAC2 driver
-  SCURegister = le32_to_cpu(*(volatile u_long *)(SCU_BASE + SCU_SCRATCH_REGISTER));
-  *(volatile u_long *)(SCU_BASE + SCU_SCRATCH_REGISTER) = cpu_to_le32((SCURegister & ~(0x3000)) | (CONFIG_MAC2_PHY_SETTING << 12));
+	if (CONFIG_ASPEED_MAC_PHY_SETTING >= 1) {
+		//NCSI Struct Initialize
+		NCSI_Struct_Initialize();
+	}
+	//Set Scratch register (0x1E6E2040 D[15:14])(0x1E6E2041 D[7:6]) to inform kernel MAC1 driver
+	SCURegister = le32_to_cpu(*(volatile u_long *)(SCU_BASE + SCU_SCRATCH_REGISTER));
+	*(volatile u_long *)(SCU_BASE + SCU_SCRATCH_REGISTER) = cpu_to_le32((SCURegister & ~(0xc000)) | (CONFIG_MAC1_PHY_SETTING << 14));
+	//Set Scratch register (0x1E6E2040 D[13:12])(0x1E6E2041 D[5:4]) to inform kernel MAC2 driver
+	SCURegister = le32_to_cpu(*(volatile u_long *)(SCU_BASE + SCU_SCRATCH_REGISTER));
+	*(volatile u_long *)(SCU_BASE + SCU_SCRATCH_REGISTER) = cpu_to_le32((SCURegister & ~(0x3000)) | (CONFIG_MAC2_PHY_SETTING << 12));
 
 
-  dev->init = aspeednic_init;
-  dev->halt = aspeednic_halt;
-  dev->send = aspeednic_send;
-  dev->recv = aspeednic_recv;
-  dev->write_hwaddr = aspeednic_write_hwaddr;
+	dev->init = aspeednic_init;
+	dev->halt = aspeednic_halt;
+	dev->send = aspeednic_send;
+	dev->recv = aspeednic_recv;
+	dev->write_hwaddr = aspeednic_write_hwaddr;
 
-  /* Ensure we're not sleeping. */
-  if (CONFIG_ASPEED_MAC_PHY_SETTING >= 1) {
-    udelay(2000000); //2.0 sec
-  }
-  else {
-    udelay(10 * 1000);
-  }
+	/* Ensure we're not sleeping. */
+	if (CONFIG_ASPEED_MAC_PHY_SETTING >= 1) {
+		udelay(2000000); //2.0 sec
+	}
+	else {
+		udelay(10 * 1000);
+	}
 
-  eth_register(dev);
+	eth_register(dev);
 
 #if defined(CONFIG_MII) || defined(CONFIG_CMD_MII)
-  miiphy_register(dev->name, faraday_mdio_read, faraday_mdio_write);
+	miiphy_register(dev->name, faraday_mdio_read, faraday_mdio_write);
 #endif
 
-  return 1;
+	return 1;
 }
 
 void Calculate_Checksum(unsigned char *buffer_base, int Length)
@@ -1242,118 +1203,115 @@ static int aspeednic_init(struct eth_device* dev, bd_t* bis)
   return 1;
 }
 
-static int aspeednic_send(struct eth_device* dev, volatile void *packet, int length)
+static int aspeednic_send(struct eth_device* dev, void *packet, int length)
 {
-  int   status = -1, oldlength = 0, fail = 0;
-  int   i;
+	int status = -1, oldlength = 0, fail = 0;
+	int i;
 
-  if (length <= 0) {
-    printf("%s: bad packet size: %d\n", dev->name, length);
-    goto Done;
-  }
+	if (length <= 0) {
+		printf("%s: bad packet size: %d\n", dev->name, length);
+		goto done;
+	}
 
+	for(i = 0; (tx_ring[tx_new].status & cpu_to_le32(TXDMA_OWN)) == 0x80000000; i++) {
+		if (i >= TOUT_LOOP) {
+			printf("%s: tx error buffer not ready\n", dev->name);
+			fail = 1;
+			goto done;
+		}
+	}
 
-  for(i = 0; (tx_ring[tx_new].status & cpu_to_le32(TXDMA_OWN)) == 0x80000000; i++) {
-    if (i >= TOUT_LOOP) {
-      printf("%s: tx error buffer not ready\n", dev->name);
-      fail = 1;
-      goto Done;
-    }
-  }
+	if (length < 60) {
+		oldlength = length;
+		//            memset ((void *)cpu_to_le32((u32) (packet + length)), 0, 60 - length);
+		length = 60;
+	}
 
+	tx_ring[tx_new].buf = cpu_to_le32(((u32) packet));
+	tx_ring[tx_new].status &= (~(0x3FFF));
+	tx_ring[tx_new].status |= cpu_to_le32(LTS | FTS | length);
+	tx_ring[tx_new].status |= cpu_to_le32(TXDMA_OWN);
 
-  if (length < 60) {
-    oldlength = length;
-//            memset ((void *)cpu_to_le32((u32) (packet + length)), 0, 60 - length);
-    length = 60;
-  }
-  tx_ring[tx_new].buf = cpu_to_le32(((u32) packet));
-  tx_ring[tx_new].status &= (~(0x3FFF));
-  tx_ring[tx_new].status |= cpu_to_le32(LTS | FTS | length);
-  tx_ring[tx_new].status |= cpu_to_le32(TXDMA_OWN);
+	OUTL(dev, POLL_DEMAND, TXPD_REG);
 
-  OUTL(dev, POLL_DEMAND, TXPD_REG);
+	for (i = 0; (tx_ring[tx_new].status & cpu_to_le32(TXDMA_OWN)) == 0x80000000; i++) {
+		if (i >= TOUT_LOOP) {
+			printf(".%s: tx buffer not ready\n", dev->name);
+			fail = 1;
+			goto done;
+		}
+	}
 
-  for (i = 0; (tx_ring[tx_new].status & cpu_to_le32(TXDMA_OWN)) == 0x80000000; i++)
-  {
-    if (i >= TOUT_LOOP)
-    {
-      printf(".%s: tx buffer not ready\n", dev->name);
-      fail = 1;
-      goto Done;
-    }
-  }
+	if (fail != 1) {
+		status = oldlength;
+	}
 
-  if (fail != 1) {
-    status = oldlength;
-  }
+done:
+	tx_new = (tx_new+1) % NUM_TX_DESC;
 
-  Done:
-  tx_new = (tx_new+1) % NUM_TX_DESC;
-
-  return status;
+	return status;
 }
 
 static int aspeednic_recv(struct eth_device* dev)
 {
-  s32   status;
-  int   length = 0;
+	s32   status;
+	int   length = 0;
 
-  for ( ; ; )
-  {
-    status = (s32)le32_to_cpu(rx_ring[rx_new].status);
+	for ( ; ; )
+	{
+		status = (s32)le32_to_cpu(rx_ring[rx_new].status);
 
-    if ((status & RXPKT_STATUS) == 0) {
-      break;
-    }
+		if ((status & RXPKT_STATUS) == 0) {
+			break;
+		}
 
-    if (status & LRS) {
-      /* Valid frame status.
-       */
-      if (status & (RX_ERR | CRC_ERR | FTL | RUNT | RX_ODD_NB)) {
+		if (status & LRS) {
+			/* Valid frame status.
+			*/
+			if (status & (RX_ERR | CRC_ERR | FTL | RUNT | RX_ODD_NB)) {
 
-        /* There was an error.
-         */
-        printf("RX error status = 0x%08X\n", status);
-      } else {
-        /* A valid frame received.
-         */
-        length = (le32_to_cpu(rx_ring[rx_new].status) & 0x3FFF);
-        debug("%s(): RX buffer %d, %x received\n",
-              __func__, rx_new, length);
+				/* There was an error.
+				*/
+				printf("RX error status = 0x%08X\n", status);
+			} else {
+				/* A valid frame received.
+				*/
+				length = (le32_to_cpu(rx_ring[rx_new].status) & 0x3FFF);
+				debug("%s(): RX buffer %d, %x received\n",
+						__func__, rx_new, length);
 
 
-        /* Pass the packet up to the protocol
-         * layers.
-         */
-        net_process_received_packet(rx_buffer[rx_new], length - 4);
-      }
+				/* Pass the packet up to the protocol
+				 * layers.
+				 */
+				net_process_received_packet(rx_buffer[rx_new], length - 4);
+			}
 
-      /* Change buffer ownership for this frame, back
-       * to the adapter.
-       */
-      rx_ring[rx_new].status &= cpu_to_le32(0x7FFFFFFF);
+			/* Change buffer ownership for this frame, back
+			 * to the adapter.
+			 */
+			rx_ring[rx_new].status &= cpu_to_le32(0x7FFFFFFF);
 
-      /*
-       * Ask the hardware for any other packets now that we have a known
-       * spare slot
-       */
-      OUTL(dev, POLL_DEMAND, RXPD_REG);
-//      rx_ring[rx_new].status = cpu_to_le32(RXPKT_RDY);
-    }
+			/*
+			 * Ask the hardware for any other packets now that we have a known
+			 * spare slot
+			 */
+			OUTL(dev, POLL_DEMAND, RXPD_REG);
+			//      rx_ring[rx_new].status = cpu_to_le32(RXPKT_RDY);
+		}
 
-    /* Update entry information.
-     */
-    rx_new = (rx_new + 1) % rxRingSize;
-  }
+		/* Update entry information.
+		*/
+		rx_new = (rx_new + 1) % rxRingSize;
+	}
 
-  /*
-   * Ask the hardware for more packets so that they'll be DMAed by the time
-   * we return to this loop
-   */
-  OUTL(dev, POLL_DEMAND, RXPD_REG);
+	/*
+	 * Ask the hardware for more packets so that they'll be DMAed by the time
+	 * we return to this loop
+	 */
+	OUTL(dev, POLL_DEMAND, RXPD_REG);
 
-  return length;
+	return length;
 }
 
 static void aspeednic_halt(struct eth_device* dev)
@@ -1402,20 +1360,19 @@ static u16 phy_read_register (struct eth_device* dev, u8 PHY_Register, u8 PHY_Ad
 
 static void phy_write_register (struct eth_device* dev, u8 PHY_Register, u8 PHY_Address, u16 PHY_Data)
 {
-  u32 Status = 0, Loop_Count = 0, PHY_Ready = 1;
+	u32 Status = 0, Loop_Count = 0;
 
-//20us * 100 = 2ms > (1 / 2.5Mhz) * 0x34
-  OUTL(dev, PHY_Data, PHYDATA_REG);
-  OUTL(dev, (PHY_Register << 21) + (PHY_Address << 16) + MIIWR + MDC_CYCTHR, PHYCR_REG);
-  do {
-    udelay(20);
-    Status = (INL (dev, PHYCR_REG) & MIIWR);
-    Loop_Count++;
-    if (Loop_Count >= 100) {
-      PHY_Ready = 0;
-      break;
-    }
-  } while (Status == MIIWR);
+	//20us * 100 = 2ms > (1 / 2.5Mhz) * 0x34
+	OUTL(dev, PHY_Data, PHYDATA_REG);
+	OUTL(dev, (PHY_Register << 21) + (PHY_Address << 16) + MIIWR + MDC_CYCTHR, PHYCR_REG);
+	do {
+		udelay(20);
+		Status = (INL (dev, PHYCR_REG) & MIIWR);
+		Loop_Count++;
+		if (Loop_Count >= 100) {
+			break;
+		}
+	} while (Status == MIIWR);
 }
 
 #if defined(CONFIG_MII) || defined(CONFIG_CMD_MII)
