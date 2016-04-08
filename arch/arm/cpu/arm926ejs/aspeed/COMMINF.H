@@ -589,7 +589,6 @@ GLOBAL  CHAR        ModeSwitch;
 
 GLOBAL  ULONG   ARP_data[16];
 GLOBAL  ULONG   NCSI_LinkFail_Val;
-static  const  char version_name[] = VER_NAME;
 
 GLOBAL void    Debug_delay (void);
 GLOBAL void    read_scu (void);

@@ -503,11 +503,6 @@ void FPri_End (BYTE option) {
 		PRINT(OUT_OBJ "[PHY] Adr:%d ID2:%04lx ID3:%04lx (%s)\n", PHY_ADR, PHY_ID2, PHY_ID3, PHYName);
 	} // End if ( ModeSwitch == MODE_NSCI )
 
-#ifdef SUPPORT_PHY_LAN9303
-	PRINT(OUT_OBJ "[Ver II] %s (for LAN9303 with I2C%d)\n", version_name, LAN9303_I2C_BUSNUM);
-#else
-	PRINT(OUT_OBJ "[Ver II] %s\n", version_name);
-#endif
 } // End void FPri_End (BYTE option)
 
 //------------------------------------------------------------

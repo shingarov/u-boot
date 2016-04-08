@@ -160,7 +160,6 @@ void print_status(ULONG status)
 //------------------------------------------------------------
 void readme()
 {
-        printf("\nVersion:%s\n", version_name);
 #ifdef LAN9303M
         printf("LAN9303M [bus] [vir_PHY_adr] [speed] [func]\n");
 #else

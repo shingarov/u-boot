@@ -11,12 +11,6 @@
 #ifndef SWFUNC_H
 #define SWFUNC_H
 
-
-//---------------------------------------------------------
-// Program information
-//---------------------------------------------------------
-#define    VER_NAME    "Ver 0.34 version @2014/03/25 0932"
-
 /* == Step 1: ====== Support OS system =================== */
 // LinuxAP
 // #define Windows
