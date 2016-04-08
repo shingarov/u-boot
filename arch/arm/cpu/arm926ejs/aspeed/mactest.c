@@ -73,16 +73,6 @@ int main(int argc, char *argv[])
         time(&timestart);
     #endif
 
-    // For DOS system
-    #if defined(PHY_NCSI)
-        // For DOS compiler OPEN WATCOM
-        ModeSwitch = MODE_NSCI;
-    #else
-        #ifdef SLT_DOS
-        ModeSwitch = MODE_DEDICATED;
-        #endif
-    #endif
-
 //------------------------------------------------------------
 // Argument Initial
 //------------------------------------------------------------

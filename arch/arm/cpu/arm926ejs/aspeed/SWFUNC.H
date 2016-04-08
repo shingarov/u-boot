@@ -18,20 +18,6 @@
 #define LAN9303_I2C_BUSNUM      6  // 1-based
 #define LAN9303_I2C_ADR         0x14
 
-/* ====================== Program ======================== */
-// The "PHY_NCSI" option is only for DOS compiler
-#if defined (PHY_NCSI)
-    #ifdef SLT_UBOOT
-        #error Wrong setting......
-    #endif
-#endif
-
-#if defined (PHY_NCSI)
-    #ifdef SUPPORT_PHY_LAN9303
-        #error Wrong setting (Can't support LAN9303)......
-    #endif
-#endif
-
 /* =================  Check setting  ===================== */
 #ifdef SLT_UBOOT
     #ifdef SLT_DOS
