@@ -887,11 +887,7 @@ NCSI_LOOP_INFINI:;
                         init_scu2();
 
                     if ( Enable_InitPHY ) {
-#ifdef SUPPORT_PHY_LAN9303
-                        LAN9303(LAN9303_I2C_BUSNUM, PHY_ADR_arg, GSpeed_idx, Enable_IntLoopPHY | (BurstEnable<<1) | IEEETesting);
-#else
                         init_phy( Enable_IntLoopPHY );
-#endif
                         DELAY( Delay_PHYRst * 10 );
                     } // End if (Enable_InitPHY)
 

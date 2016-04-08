@@ -562,16 +562,4 @@ GLOBAL void    PrintIO_LineS (BYTE option);
 GLOBAL void    PrintIO_Line (BYTE option);
 GLOBAL void    FPri_ErrFlag (BYTE option);
 
-#ifdef SUPPORT_PHY_LAN9303
-// ========================================================
-// For LAN9303.c
-#undef GLOBAL
-#ifdef LAN9303_C
-#define GLOBAL
-#else
-#define GLOBAL    extern
-#endif
-
-GLOBAL void LAN9303(int num, int phy_adr, int speed, int int_loopback);
-#endif // SUPPORT_PHY_LAN9303
 #endif // End COMMINF_H
