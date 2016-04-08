@@ -16,7 +16,6 @@
 
 obj-y	= timer.o
 obj-y	+= reset.o
-obj-y	+= mactest.o
 obj-y	+= DRAM_SPI.o
 obj-y	+= IO.o
 obj-y	+= LIB.o
@@ -25,6 +24,3 @@ obj-y	+= NCSI.o
 obj-y	+= PCI_SPI.o
 obj-y	+= PHY.o
 obj-y	+= SPIM.o
-obj-y	+= PLLTESTU.o
-obj-y	+= TRAPTEST.o
-obj-y	+= STRESS.o

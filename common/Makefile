@@ -68,8 +68,6 @@ obj-$(CONFIG_USB_STORAGE) += usb_storage.o
 endif
 
 # others
-obj-$(CONFIG_CMD_NETTEST) += cmd_nettest.o
-obj-$(CONFIG_CMD_SLT) += cmd_slt.o
 obj-$(CONFIG_BOOTSTAGE) += bootstage.o
 obj-$(CONFIG_CONSOLE_MUX) += iomux.o
 obj-y += flash.o
@@ -161,6 +159,3 @@ obj-y += s_record.o
 obj-y += xyzModem.o
 
 CFLAGS_env_embedded.o := -Wa,--no-warn -DENV_CRC=$(shell tools/envcrc 2>/dev/null)
-
-CFLAGS_cmd_nettest.o += -I$(srctree)/$(CPUDIR)/$(SOC)/
-CFLAGS_cmd_slt.o += -I$(srctree)/$(CPUDIR)/$(SOC)/
