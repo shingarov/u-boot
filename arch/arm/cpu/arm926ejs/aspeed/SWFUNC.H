@@ -11,36 +11,7 @@
 #ifndef SWFUNC_H
 #define SWFUNC_H
 
-/* == Step 1: ====== Support OS system =================== */
-// LinuxAP
-// #define Windows
 #define SLT_UBOOT
-//#define SLT_DOS
-
-/* == Step 2:======== Support interface ================== */
-/* Choose One */
-//#define SPI_BUS
-//#define USE_LPC
-//#define USE_P2A     // PCI or PCIe bus to AHB bus
-
-/* == Step 3:==========  Support Chip   ================== */
-//#define AST1010_CHIP
-//#define AST3200_IOMAP
-//#define FPGA
-
-#ifdef AST1010_CHIP
-    #ifdef SLT_UBOOT
-        #define AST1010_IOMAP   1
-    #endif
-    #ifdef SLT_DOS
-        #define AST1010_IOMAP   2
-
-        // AST1010 only has LPC interface
-        #undef USE_P2A
-        #undef SPI_BUS
-        #define USE_LPC
-    #endif
-#endif
 
 /* == Step 4:==========   Select PHY    ================== */
 //#define SUPPORT_PHY_LAN9303        // Initial PHY via I2C bus
@@ -64,11 +35,6 @@
 /* =================  Check setting  ===================== */
 #ifdef SLT_UBOOT
     #ifdef SLT_DOS
-        #error Can NOT support two OS
-    #endif
-#endif
-#ifdef SLT_DOS
-    #ifdef SLT_UBOOT
         #error Can NOT support two OS
     #endif
 #endif
