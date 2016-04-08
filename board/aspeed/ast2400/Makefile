@@ -14,8 +14,6 @@ obj-y   = ast2400.o \
 	flash_spi.o \
 	pci.o \
 	crc32.o \
-	slt.o \
-	vfun.o \
-	crt.o
+	slt.o
 
 obj-y   += platform.o
