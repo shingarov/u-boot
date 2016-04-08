@@ -13,22 +13,11 @@ static const char ThisFile[] = "NCSI.c";
 
 #include "SWFUNC.H"
 
-#ifdef SLT_UBOOT
-  #include <common.h>
-  #include <command.h>
-  #include "COMMINF.H"
-  #include "NCSI.H"
-  #include "IO.H"
-#endif
-#ifdef SLT_DOS
-  #include <stdio.h>
-  #include <stdlib.h>
-  #include <conio.h>
-  #include <string.h>
-  #include "COMMINF.H"
-  #include "NCSI.H"
-  #include "IO.H"
-#endif
+#include <common.h>
+#include <command.h>
+#include "COMMINF.H"
+#include "NCSI.H"
+#include "IO.H"
 
 NCSI_Command_Packet     NCSI_Request_SLT;
 NCSI_Response_Packet    NCSI_Respond_SLT;
@@ -184,45 +173,30 @@ char NCSI_Rx_SLT (unsigned char command) {
         do {
             NCSI_RxDesDat = ReadSOC_DD(NCSI_RxDesBase);
             if ( ++timeout > TIME_OUT_NCSI * NCSI_RxTimeOutScale ) {
-                #ifdef SLT_DOS
-                fprintf(fp_log, "[Cmd:%02X][NCSI-RxDesOwn] %08lX \n", command, NCSI_RxDesDat );
-                #endif
                 return( FindErr(Err_NCSI_Check_RxOwnTimeOut) );
             }
         } while( HWOwnRx(NCSI_RxDesDat) );
 
         #ifdef CheckRxErr
         if (NCSI_RxDesDat & 0x00040000) {
-            #ifdef SLT_DOS
-            fprintf(fp_log, "[RxDes] Error RxErr        %08lx\n", NCSI_RxDesDat);
-            #endif
             FindErr_Des(Check_Des_RxErr);
         }
         #endif
 
         #ifdef CheckOddNibble
         if (NCSI_RxDesDat & 0x00400000) {
-            #ifdef SLT_DOS
-            fprintf(fp_log, "[RxDes] Odd Nibble         %08lx\n", NCSI_RxDesDat);
-            #endif
             FindErr_Des(Check_Des_OddNibble);
         }
         #endif
 
         #ifdef CheckCRC
         if (NCSI_RxDesDat & 0x00080000) {
-            #ifdef SLT_DOS
-            fprintf(fp_log, "[RxDes] Error CRC          %08lx\n", NCSI_RxDesDat);
-            #endif
             FindErr_Des(Check_Des_CRC);
         }
         #endif
 
         #ifdef CheckRxFIFOFull
         if (NCSI_RxDesDat & 0x00800000) {
-            #ifdef SLT_DOS
-            fprintf(fp_log, "[RxDes] Error Rx FIFO Full %08lx\n", NCSI_RxDesDat);
-            #endif
             FindErr_Des(Check_Des_RxFIFOFull);
         }
         #endif
@@ -250,11 +224,6 @@ char NCSI_Rx_SLT (unsigned char command) {
         else
             dwsize = bytesize >> 2;
 
-        #ifdef SLT_DOS
-        if ( PrintNCSIEn )
-            fprintf(fp_log ,"[Rx] %d bytes(%xh)\n", bytesize, bytesize);
-        #endif
-
         for (i = 0; i < dwsize; i++) {
             NCSI_RxDWBUF[i] = ReadSOC_DD(NCSI_RxDatBase + ( i << 2 ));
             if ( PrintNCSIEn ) {
@@ -265,20 +234,6 @@ char NCSI_Rx_SLT (unsigned char command) {
                         case 2  : NCSI_RxDWBUF[i] = NCSI_RxDWBUF[i] & 0xffff    ; break;
                         case 1  : NCSI_RxDWBUF[i] = NCSI_RxDWBUF[i] & 0xff      ; break;
                     }
-                    #ifdef SLT_DOS
-                    switch (bytesize % 4) {
-                        case 0  : fprintf(fp_log ,"[Rx%02d]%08lx %08lx\n",             i, NCSI_RxDWBUF[i], DWSwap_SLT(NCSI_RxDWBUF[i])       ); break;
-                        case 3  : fprintf(fp_log ,"[Rx%02d]--%06lx %06lx--\n",         i, NCSI_RxDWBUF[i], DWSwap_SLT(NCSI_RxDWBUF[i]) >>  8 ); break;
-                        case 2  : fprintf(fp_log ,"[Rx%02d]----%04lx %04lx----\n",     i, NCSI_RxDWBUF[i], DWSwap_SLT(NCSI_RxDWBUF[i]) >> 16 ); break;
-                        case 1  : fprintf(fp_log ,"[Rx%02d]------%02lx %02lx------\n", i, NCSI_RxDWBUF[i], DWSwap_SLT(NCSI_RxDWBUF[i]) >> 24 ); break;
-                        default : fprintf(fp_log ,"[Rx%02d]error", i); break;
-                    }
-                    #endif
-                }
-                else {
-                    #ifdef SLT_DOS
-                    fprintf(fp_log ,"[Rx%02d]%08lx %08lx\n", i, NCSI_RxDWBUF[i], DWSwap_SLT(NCSI_RxDWBUF[i]));
-                    #endif
                 }
             }
         } // End for (i = 0; i < dwsize; i++)
@@ -286,11 +241,6 @@ char NCSI_Rx_SLT (unsigned char command) {
         // EtherType field of the response packet should be 0x88F8
         if ((NCSI_RxData & 0xffff) == 0xf888) {
             memcpy (&NCSI_Respond_SLT, NCSI_RxByteBUF, bytesize);
-
-            #ifdef SLT_DOS
-            if ( PrintNCSIEn )
-                fprintf(fp_log ,"[Rx IID:%2d]\n", NCSI_Respond_SLT.IID);
-            #endif
 
             NCSI_Respond_SLT.EtherType      = WDSwap_SLT( NCSI_Respond_SLT.EtherType      );
             NCSI_Respond_SLT.Payload_Length = WDSwap_SLT( NCSI_Respond_SLT.Payload_Length );
@@ -301,11 +251,6 @@ char NCSI_Rx_SLT (unsigned char command) {
             break;
         }
         else {
-            #ifdef SLT_DOS
-            if ( PrintNCSIEn )
-                fprintf(fp_log, "[Skip] Not NCSI Response: %08lx\n", NCSI_RxData);
-            #endif
-
             retry++;
         }
     } while ( retry < NCSI_RX_RETRY_TIME );
@@ -336,11 +281,6 @@ char NCSI_Tx (void) {
     else
         dwsize = bytesize >> 2;
 
-    #ifdef SLT_DOS
-    if ( PrintNCSIEn )
-        fprintf(fp_log ,"[Tx IID:%2d] %d bytes(%xh)\n", NCSI_Request_SLT.IID, bytesize, bytesize);
-    #endif
-
     // Copy data to DMA buffer
     for (i = 0; i < dwsize; i++) {
         WriteSOC_DD( DMA_BASE + (i << 2), NCSI_TxDWBUF[i] );
@@ -352,20 +292,6 @@ char NCSI_Tx (void) {
                     case 2  : NCSI_TxDWBUF[i] = NCSI_TxDWBUF[i] & 0x0000ffff; break;
                     case 1  : NCSI_TxDWBUF[i] = NCSI_TxDWBUF[i] & 0x000000ff; break;
                 }
-                #ifdef SLT_DOS
-                switch (bytesize % 4) {
-                    case 0  : fprintf(fp_log ,"[Tx%02d]%08x %08x\n",             i, NCSI_TxDWBUF[i], DWSwap_SLT( NCSI_TxDWBUF[i])       ); break;
-                    case 3  : fprintf(fp_log ,"[Tx%02d]--%06x %06x--\n",         i, NCSI_TxDWBUF[i], DWSwap_SLT( NCSI_TxDWBUF[i]) >>  8 ); break;
-                    case 2  : fprintf(fp_log ,"[Tx%02d]----%04x %04x----\n",     i, NCSI_TxDWBUF[i], DWSwap_SLT( NCSI_TxDWBUF[i]) >> 16 ); break;
-                    case 1  : fprintf(fp_log ,"[Tx%02d]------%02x %02x------\n", i, NCSI_TxDWBUF[i], DWSwap_SLT( NCSI_TxDWBUF[i]) >> 24 ); break;
-                    default : fprintf(fp_log ,"[Tx%02d]error", i); break;
-                }
-                #endif
-            }
-            else {
-                #ifdef SLT_DOS
-                fprintf( fp_log , "[Tx%02d]%08x %08x\n", i, NCSI_TxDWBUF[i], DWSwap_SLT(NCSI_TxDWBUF[i]) );
-                #endif
             }
         }
     } // End for (i = 0; i < dwsize; i++)
@@ -381,10 +307,6 @@ char NCSI_Tx (void) {
     do {
         NCSI_TxDesDat = ReadSOC_DD(H_TDES_BASE);
         if ( ++timeout > TIME_OUT_NCSI ) {
-            #ifdef SLT_DOS
-            fprintf(fp_log, "[NCSI-TxDesOwn] %08lx\n", NCSI_TxDesDat);
-            #endif
-
             return(FindErr(Err_NCSI_Check_TxOwnTimeOut));
         }
     } while ( HWOwnTx(NCSI_TxDesDat) );
@@ -399,16 +321,7 @@ char NCSI_ARP (void) {
     ULONG  NCSI_TxDesDat;
 
     if ( ARPNumCnt ) {
-        #ifdef SLT_DOS
-        if ( PrintNCSIEn )
-            fprintf(fp_log ,"[ARP] 60 bytes x%d\n", ARPNumCnt);
-        #endif
-
         for (i = 0; i < 15; i++) {
-            #ifdef SLT_DOS
-            if ( PrintNCSIEn )
-                fprintf(fp_log ,"[Tx%02d] %08x %08x\n", i, ARP_data[i], DWSwap_SLT(ARP_data[i]));
-            #endif
             WriteSOC_DD( DMA_BASE + ( i << 2 ), ARP_data[i] );
         }
         WriteSOC_DD( H_TDES_BASE + 0x04, 0               );
@@ -426,10 +339,6 @@ char NCSI_ARP (void) {
                 NCSI_TxDesDat = ReadSOC_DD(H_TDES_BASE);
 
                 if (++timeout > TIME_OUT_NCSI) {
-                    #ifdef SLT_DOS
-                    fprintf(fp_log, "[ARP-TxDesOwn] %08lx\n", NCSI_TxDesDat);
-                    #endif
-
                     return(FindErr(Err_NCSI_Check_ARPOwnTimeOut));
                 }
             } while (HWOwnTx(NCSI_TxDesDat));
@@ -499,9 +408,6 @@ void NCSI_PrintCommandType (unsigned char command, unsigned iid) {
 //------------------------------------------------------------
 void NCSI_PrintCommandType2File (unsigned char command, unsigned iid) {
     NCSI_PrintCommandStr(command, iid);
-    #ifdef SLT_DOS
-    fprintf(fp_log, "%s\n", NCSI_CommandStr);
-    #endif
 }
 
 //------------------------------------------------------------
@@ -528,36 +434,9 @@ char NCSI_SentWaitPacket (unsigned char command, unsigned char id, unsigned shor
         if ( NCSI_Rx_SLT( command ) )
             return(2);
 
-        #ifdef SLT_DOS
-        if ( PrintNCSIEn )
-            fprintf(fp_log, "[Request] ETyp:%04x MC_ID:%02x HeadVer:%02x IID:%02x Comm:%02x ChlID:%02x PayLen:%04x\n", WDSwap_SLT(NCSI_Request_SLT.EtherType),
-                                                                                                                       NCSI_Request_SLT.MC_ID,
-                                                                                                                       NCSI_Request_SLT.Header_Revision,
-                                                                                                                       NCSI_Request_SLT.IID,
-                                                                                                                       NCSI_Request_SLT.Command,
-                                                                                                                       NCSI_Request_SLT.Channel_ID,
-                                                                                                                       WDSwap_SLT(NCSI_Request_SLT.Payload_Length) );
-        if ( PrintNCSIEn )
-            fprintf(fp_log, "[Respond] ETyp:%04x MC_ID:%02x HeadVer:%02x IID:%02x Comm:%02x ChlID:%02x PayLen:%04x ResCd:%02x ReaCd:%02x\n",
-                                                                                                                       NCSI_Respond_SLT.EtherType,
-                                                                                                                       NCSI_Respond_SLT.MC_ID,
-                                                                                                                       NCSI_Respond_SLT.Header_Revision,
-                                                                                                                       NCSI_Respond_SLT.IID,
-                                                                                                                       NCSI_Respond_SLT.Command,
-                                                                                                                       NCSI_Respond_SLT.Channel_ID,
-                                                                                                                       NCSI_Respond_SLT.Payload_Length,
-                                                                                                                       NCSI_Respond_SLT.Response_Code,
-                                                                                                                       NCSI_Respond_SLT.Reason_Code);
-        #endif
-
         if ( (NCSI_Respond_SLT.IID           != InstanceID)       ||
              (NCSI_Respond_SLT.Command       != (command | 0x80)) ||
              (NCSI_Respond_SLT.Response_Code != COMMAND_COMPLETED)  ) {
-            #ifdef SLT_DOS
-            if ( PrintNCSIEn )
-                fprintf(fp_log, "Retry: Command = %x, Response_Code = %x\n", NCSI_Request_SLT.Command, NCSI_Respond_SLT.Response_Code);
-
-            #endif
             Retry++;
         }
         else {
@@ -757,9 +636,6 @@ char phy_ncsi (void) {
     number_pak    = 0;
 
     NCSI_LinkFail_Val = 0;
-    #ifdef SLT_DOS
-		fprintf(fp_log, "\n\n======> Start:\n" );
-    #endif
     NCSI_Struct_Initialize_SLT();
 
     #ifdef NCSI_Skip_Phase1_DeSelectPackage
@@ -815,9 +691,6 @@ char phy_ncsi (void) {
 
             if ( !(IOTiming||IOTimingBund) )
                 printf ("====Find Package ID: %d\n", NCSI_Cap_SLT.Package_ID);
-            #ifdef SLT_DOS
-            fprintf(fp_log, "====Find Package ID: %d\n", NCSI_Cap_SLT.Package_ID);
-            #endif
 
             #ifdef NCSI_Skip_Phase1_DeSelectPackage
             #else
@@ -837,9 +710,6 @@ char phy_ncsi (void) {
                     if ( !(IOTiming || IOTimingBund) )
                         printf ("--------Find Channel ID: %d\n", NCSI_Cap_SLT.Channel_ID);
 
-                    #ifdef SLT_DOS
-                    fprintf(fp_log, "--------Find Channel ID: %d\n", NCSI_Cap_SLT.Channel_ID);
-                    #endif
                     // Get Version and Capabilities
                     Get_Version_ID_SLT();          //Command:0x15
                     Get_Capabilities_SLT();        //Command:0x16
@@ -867,10 +737,6 @@ char phy_ncsi (void) {
                             if (!(IOTiming||IOTimingBund))
                                 printf ("        This Channel is LINK_UP\n");
 
-                            #ifdef SLT_DOS
-                            fprintf(fp_log, "        This Channel is LINK_UP\n");
-                            #endif
-
                             NCSI_ARP ();
 
                             break;
@@ -879,11 +745,6 @@ char phy_ncsi (void) {
                             if ( Re_Send >= 2 ) {
                                 if ( !(IOTiming || IOTimingBund) )
                                     printf ("        This Channel is LINK_DOWN\n");
-
-                                #ifdef SLT_DOS
-                                fprintf(fp_log, "        This Channel is LINK_DOWN\n");
-                                #endif
-
 				    break;
 				}
                         } // End if ( Link_Status == LINK_UP )
@@ -914,9 +775,6 @@ char phy_ncsi (void) {
         else {
             if (!(IOTiming||IOTimingBund)) {
                 printf ("====Absence of Package ID: %ld\n", pkg_idx);
-                #ifdef SLT_DOS
-                fprintf(fp_log, "====Absence of Package ID: %ld\n", pkg_idx);
-                #endif
             }
         } // End if (select_flag[pkg_idx] == 0)
     } // End for (pkg_idx = 0; pkg_idx < MAX_PACKAGE_NUM; pkg_idx++)

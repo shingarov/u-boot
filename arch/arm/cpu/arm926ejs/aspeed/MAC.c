@@ -13,18 +13,9 @@ static const char ThisFile[] = "MAC.c";
 
 #include "SWFUNC.H"
 
-#ifdef SLT_UBOOT
-  #include <common.h>
-  #include <command.h>
-  #include "COMMINF.H"
-#endif
-#ifdef SLT_DOS
-  #include <stdio.h>
-  #include <stdlib.h>
-  #include <conio.h>
-  #include <string.h>
-  #include "COMMINF.H"
-#endif
+#include <common.h>
+#include <command.h>
+#include "COMMINF.H"
 
 #include "MAC.H"
 
@@ -50,10 +41,6 @@ ULONG	SCU_04h_old;
 ULONG	WDT_2ch_old;
 char	SCU_oldvld = 0;
 
-#ifdef SLT_UBOOT
-#else
-    static  double      timeused;
-#endif
 // -------------------------------------------------------------
 
 void Debug_delay (void) {
@@ -169,9 +156,6 @@ void    Setting_scu (void)
     if (AST1010) {
         do {
             WriteSOC_DD( SCU_BASE + 0x00 , 0x1688a8a8);
-            #ifndef SLT_UBOOT
-            WriteSOC_DD( SCU_BASE + 0x70 , SCU_70h_old & 0xfffffffe);  // Disable CPU
-            #endif
         } while ( ReadSOC_DD( SCU_BASE + 0x00 ) != 0x1 );
 
         #if( AST1010_IOMAP == 1)
@@ -181,9 +165,6 @@ void    Setting_scu (void)
     else {
         do {
             WriteSOC_DD( SCU_BASE + 0x00, 0x1688a8a8);
-            #ifndef SLT_UBOOT
-            WriteSOC_DD( SCU_BASE + 0x70, SCU_70h_old | 0x3 ); // Disable CPU
-            #endif
         } while ( ReadSOC_DD( SCU_BASE + 0x00 ) != 0x1 );
     } // End if (AST1010)
 
@@ -375,11 +356,6 @@ void init_mac (ULONG base, ULONG tdexbase, ULONG rdexbase) {
 //------------------------------------------------------------
 void FPri_RegValue (BYTE option) {
 
-#ifdef SLT_UBOOT
-#else
-    time_t	timecur;
-#endif
-
     FILE_VAR
 
     GET_OBJ( option )
@@ -394,12 +370,6 @@ void FPri_RegValue (BYTE option) {
 	PRINT(OUT_OBJ "[MAC] B0|%08lx %08lx %08lx %08lx\n", ReadSOC_DD( MAC_PHYBASE + 0xb0), ReadSOC_DD( MAC_PHYBASE + 0xb4 ), ReadSOC_DD( MAC_PHYBASE + 0xb8 ), ReadSOC_DD(MAC_PHYBASE + 0xbc ) );
 	PRINT(OUT_OBJ "[MAC] C0|%08lx %08lx %08lx\n",      ReadSOC_DD( MAC_PHYBASE + 0xc0), ReadSOC_DD( MAC_PHYBASE + 0xc4 ), ReadSOC_DD( MAC_PHYBASE + 0xc8 ));
 
-#ifdef SLT_UBOOT
-#else
-	fprintf(fp, "Time: %s", ctime(&timestart));
-	time(&timecur);
-	fprintf(fp, "----> %s", ctime(&timecur));
-#endif
 } // End void FPri_RegValue (BYTE *fp)
 
 //------------------------------------------------------------
@@ -634,13 +604,6 @@ void Finish_Close (void) {
 	if (SCU_oldvld)
 	    recov_scu();
 
-#ifdef SLT_DOS
-	if (fp_io && IOTiming)
-	    fclose(fp_io);
-
-	if (fp_log)
-	    fclose(fp_log);
-#endif
 } // End void Finish_Close (void)
 
 //------------------------------------------------------------
@@ -753,35 +716,6 @@ int check_int ( char *type ) {
     #endif
 
 	Dat_ULONG = ReadSOC_DD( H_MAC_BASE + 0x00 );//Interrupt Status
-#ifdef SLT_DOS
-#ifdef CheckRxbufUNAVA
-	if ( Dat_ULONG & 0x00000004 ) {
-		fprintf(fp_log, "[%sIntStatus] Receiving buffer unavailable               : %08lx [loop:%d]\n", type, Dat_ULONG, Loop);
-		FindErr( Err_RXBUF_UNAVA );
-	}
-#endif
-
-#ifdef CheckRPktLost
-	if ( Dat_ULONG & 0x00000008 ) {
-		fprintf(fp_log, "[%sIntStatus] Received packet lost due to RX FIFO full   : %08lx [loop:%d]\n", type, Dat_ULONG, Loop);
-		FindErr( Err_RPKT_LOST );
-	}
-#endif
-
-#ifdef CheckNPTxbufUNAVA
-	if ( Dat_ULONG & 0x00000040 ) {
-		fprintf(fp_log, "[%sIntStatus] Normal priority transmit buffer unavailable: %08lx [loop:%d]\n", type, Dat_ULONG, Loop);
-		FindErr( Err_NPTXBUF_UNAVA );
-	}
-#endif
-
-#ifdef CheckTPktLost
-	if ( Dat_ULONG & 0x00000080 ) {
-		fprintf(fp_log, "[%sIntStatus] Packets transmitted to Ethernet lost       : %08lx [loop:%d]\n", type, Dat_ULONG, Loop);
-		FindErr( Err_TPKT_LOST );
-	}
-#endif
-#endif
 	if (Err_Flag)
 	    return(1);
 	else
@@ -803,36 +737,7 @@ void setup_framesize (void) {
 	//------------------------------------------------------------
 	// Fill Frame Size out descriptor area
 	//------------------------------------------------------------
-    #ifdef SLT_UBOOT
-	if (0)
-    #else
-	if ( ENABLE_RAND_SIZE )
-    #endif
-    {
-		for (i = 0; i < DES_NUMBER; i++) {
-			if ( FRAME_Rand_Simple ) {
-				switch(rand() % 5) {
-					case 0 : FRAME_LEN[i] = 0x4e ; break;
-					case 1 : FRAME_LEN[i] = 0x4ba; break;
-					default: FRAME_LEN[i] = 0x5ea; break;
-				}
-			}
-			else {
-				FRAME_LEN_Cur = rand() % (MAX_FRAME_RAND_SIZE + 1);
-
-				if (FRAME_LEN_Cur < MIN_FRAME_RAND_SIZE)
-				    FRAME_LEN_Cur = MIN_FRAME_RAND_SIZE;
-
-				FRAME_LEN[i] = FRAME_LEN_Cur;
-			}
-#ifdef SLT_DOS
-			if (DbgPrn_FRAME_LEN)
-			    fprintf(fp_log, "[setup_framesize] FRAME_LEN_Cur:%08lx[Des:%d][loop:%d]\n", FRAME_LEN[i], i, Loop);
-#endif
-		}
-	}
-	else {
-		for (i = 0; i < DES_NUMBER; i++) {
+	for (i = 0; i < DES_NUMBER; i++) {
             #ifdef SelectSimpleLength
 			if (i % FRAME_SELH_PERD)
 			    FRAME_LEN[i] = FRAME_LENH;
@@ -863,20 +768,7 @@ void setup_framesize (void) {
                 #endif
 			} // End if (BurstEnable)
             #endif
-/*
-			switch(i % 20) {
-				case 0 : FRAME_LEN[i] = FRAME_LENH; break;
-				case 1 : FRAME_LEN[i] = FRAME_LENH; break;
-				case 2 : FRAME_LEN[i] = FRAME_LENH; break;
-				default: FRAME_LEN[i] = FRAME_LENL; break;
-			}
-*/
-#ifdef SLT_DOS
-			if (DbgPrn_FRAME_LEN)
-			    fprintf(fp_log, "[setup_framesize] FRAME_LEN_Cur:%08lx[Des:%d][loop:%d]\n", FRAME_LEN[i], i, Loop);
-#endif
-		} // End for (i = 0; i < DES_NUMBER; i++)
-	} // End if ( ENABLE_RAND_SIZE )
+	} // End for (i = 0; i < DES_NUMBER; i++)
 
     // Calculate average of frame size
 	Avg_frame_len = 0;
@@ -1098,10 +990,6 @@ char check_Data (ULONG desadr, LONG number) {
 
 	wp_lst_cur    = wp_lst[number];
 	FRAME_LEN_Cur = FRAME_LEN[number];
-#ifdef SLT_DOS
-	if ( DbgPrn_FRAME_LEN )
-	    fprintf(fp_log, "[check_Data     ] FRAME_LEN_Cur:%08lx[Des:%d][loop:%d]\n", FRAME_LEN_Cur, number, Loop);
-#endif
 	adr_srt = ReadSOC_DD(desadr) & 0xfffffffc;
 	adr_end = adr_srt + PktByteSize;
 
@@ -1133,10 +1021,6 @@ char check_Data (ULONG desadr, LONG number) {
 
 	cnt     = 0;
 	len     = (((FRAME_LEN_Cur-14) & 0xff) << 8) | ((FRAME_LEN_Cur-14) >> 8);
-#ifdef SLT_DOS
-	if (DbgPrn_Bufdat)
-	    fprintf(fp_log, " Inf:%08lx ~ %08lx(%08lx) %08lx [Des:%d][loop:%d]\n", adr_srt, adr_end, adr_las, gdata, number, Loop);
-#endif
 	for (adr = adr_srt; adr < adr_end; adr+=4) {
 
         #ifdef SelectSimpleDA
@@ -1151,14 +1035,8 @@ char check_Data (ULONG desadr, LONG number) {
 		    wp = wp & wp_lst_cur;
 
 		if ( (rdata & wp) != (gdata & wp) ) {
-#ifdef SLT_DOS
-            fprintf(fp_log, "\nError: Adr:%08lx[%3d] (%08lx) (%08lx:%08lx) [Des:%d][loop:%d]\n", adr, (adr - adr_srt) / 4, rdata, gdata, wp, number, Loop);
-#endif
 			for (index = 0; index < 6; index++) {
 				rdata = ReadSOC_DD(adr);
-#ifdef SLT_DOS
-				fprintf(fp_log, "Rep  : Adr:%08lx      (%08lx) (%08lx:%08lx) [Des:%d][loop:%d]\n", adr, rdata, gdata, wp, number, Loop);
-#endif
             }
 
 			if ( DbgPrn_DumpMACCnt )
@@ -1166,10 +1044,6 @@ char check_Data (ULONG desadr, LONG number) {
 
 			return( FindErr( Err_Check_Buf_Data ) );
 		} // End if ( (rdata & wp) != (gdata & wp) )
-#ifdef SLT_DOS
-		if ( DbgPrn_BufdatDetail )
-		    fprintf(fp_log, " Adr:%08lx[%3d] (%08lx) (%08lx:%08lx) [Des:%d][loop:%d]\n", adr, (adr - adr_srt) / 4, rdata, gdata, wp, number, Loop);
-#endif
         #ifdef SelectSimpleDA
 		if ( cnt <= 4 )
 		    gdata = gdata_bak;
@@ -1229,10 +1103,6 @@ void setup_txdes (ULONG desadr, ULONG bufbase) {
 		for (count = 0; count < DES_NUMBER; count++) {
 			FRAME_LEN_Cur = FRAME_LEN[count];
 			desval        = TDES_IniVal;
-            #ifdef SLT_DOS
-			if (DbgPrn_FRAME_LEN)
-			    fprintf(fp_log, "[setup_txdes    ] FRAME_LEN_Cur:%08lx[Des:%d][loop:%d]\n", FRAME_LEN_Cur, count, Loop);
-            #endif
 			if (DbgPrn_BufAdr)
 			    printf("[loop:%4d][des:%4d][setup_txdes] %08lx\n", Loop, count, bufadr);
 
@@ -1373,9 +1243,6 @@ char check_des_header_Tx (char *type, ULONG adr, LONG desnum) {
 	while ( HWOwnTx(dat) ) {
 	    // we will run again, if transfer has not been completed.
 		if ( RxDataEnable && (++timeout > TIME_OUT_Des) ) {
-            #ifdef SLT_DOS
-            fprintf(fp_log, "[%sTxDesOwn] Address %08lx = %08lx [Des:%d][loop:%d]\n", type, adr, dat, desnum, Loop);
-            #endif
 			return(FindErr_Des(Check_Des_TxOwnTimeOut));
 		}
 		WriteSOC_DD(H_MAC_BASE + 0x18, 0x00000000);//Tx Poll
@@ -1401,9 +1268,6 @@ char check_des_header_Rx (char *type, ULONG adr, LONG desnum) {
 	while ( HWOwnRx( dat ) ) {
 	    // we will run again, if transfer has not been completed.
 		if (TxDataEnable && (++timeout > TIME_OUT_Des)) {
-            #ifdef SLT_DOS
-            fprintf(fp_log, "[%sRxDesOwn] Address %08lx = %08lx [Des:%d][loop:%d]\n", type, adr, dat, desnum, Loop);
-            #endif
 			return(FindErr_Des(Check_Des_RxOwnTimeOut));
 		}
 
@@ -1419,51 +1283,32 @@ char check_des_header_Rx (char *type, ULONG adr, LONG desnum) {
 	Dat_ULONG = ReadSOC_DD( adr + 12 );
 
     #ifdef CheckRxLen
-    #ifdef SLT_DOS
-    if ( DbgPrn_FRAME_LEN )
-	    fprintf(fp_log, "[%sRxDes          ] FRAME_LEN_Cur:%08lx[Des:%d][loop:%d]\n", type, (FRAME_LEN_Cur + 4), desnum, Loop);
-    #endif
 
 	if ((dat & 0x3fff) != (FRAME_LEN_Cur + 4)) {
-        #ifdef SLT_DOS
-		fprintf(fp_log, "[%sRxDes] Error Frame Length %08lx:%08lx %08lx(%4d/%4d) [Des:%d][loop:%d]\n",   type, adr, dat, Dat_ULONG, (dat & 0x3fff), (FRAME_LEN_Cur + 4), desnum, Loop);
-        #endif
 		FindErr_Des(Check_Des_FrameLen);
 	}
     #endif // End CheckRxLen
 
     #ifdef CheckRxErr
 	if (dat & 0x00040000) {
-        #ifdef SLT_DOS
-		fprintf(fp_log, "[%sRxDes] Error RxErr        %08lx:%08lx %08lx            [Des:%d][loop:%d]\n", type, adr, dat, Dat_ULONG, desnum, Loop);
-        #endif
         FindErr_Des(Check_Des_RxErr);
 	}
     #endif // End CheckRxErr
 
     #ifdef CheckOddNibble
 	if (dat & 0x00400000) {
-        #ifdef SLT_DOS
-		fprintf(fp_log, "[%sRxDes] Odd Nibble         %08lx:%08lx %08lx            [Des:%d][loop:%d]\n", type, adr, dat, Dat_ULONG, desnum, Loop);
-        #endif
 		FindErr_Des(Check_Des_OddNibble);
 	}
     #endif // End CheckOddNibble
 
     #ifdef CheckCRC
 	if (dat & 0x00080000) {
-        #ifdef SLT_DOS
-		fprintf(fp_log, "[%sRxDes] Error CRC          %08lx:%08lx %08lx            [Des:%d][loop:%d]\n", type, adr, dat, Dat_ULONG, desnum, Loop);
-        #endif
 		FindErr_Des(Check_Des_CRC);
 	}
     #endif // End CheckCRC
 
     #ifdef CheckRxFIFOFull
 	if (dat & 0x00800000) {
-		#ifdef SLT_DOS
-        fprintf(fp_log, "[%sRxDes] Error Rx FIFO Full %08lx:%08lx %08lx            [Des:%d][loop:%d]\n", type, adr, dat, Dat_ULONG, desnum, Loop);
-        #endif
 		FindErr_Des(Check_Des_RxFIFOFull);
 	}
     #endif // End CheckRxFIFOFull
@@ -1556,10 +1401,6 @@ char check_des (ULONG bufnum, int checkpoint) {
 
 		//[Check Owner Bit]--------------------
 		FRAME_LEN_Cur = FRAME_LEN[desnum];
-#ifdef SLT_DOS
-		if ( DbgPrn_FRAME_LEN )
-		    fprintf(fp_log, "[check_des      ] FRAME_LEN_Cur:%08lx[Des:%d][loop:%d]%d\n", FRAME_LEN_Cur, desnum, Loop, checkpoint);
-#endif
 //		if (BurstEnable) {
 //			if (check_des_header_Tx("", H_tx_desadr, desnum)) {CheckDesFail_DesNum = desnum; return(1);}
 //		} else {
@@ -1835,27 +1676,6 @@ void PrintIO_Line (BYTE option) {
 } // End void PrintIO_Line (BYTE option)
 
 //------------------------------------------------------------
-void PrintIO_Line_LOG (void) {
-#ifndef SLT_UBOOT
-#ifdef Enable_Old_Style
-	if (Enable_RMII) fprintf(fp_log, "\nTx:SCU48[   %2d]=%2x, ", IOdly_out_shf, IOdly_out);
-	else             fprintf(fp_log, "\nTx:SCU48[%2d:%2d]=%2x, ", IOdly_out_shf+3, IOdly_out_shf, IOdly_out);
-
-	fprintf(fp_log, "Rx:SCU48[%2d:%2d]=%01x: ", IOdly_in_shf+3, IOdly_in_shf, IOdly_in);
-
-	if (dlymap[IOdly_i][IOdly_j]) fprintf(fp_log, " X\n");
-	else                          fprintf(fp_log, " O\n");
-#else
-	fprintf(fp_log, "\nRx:SCU48[%2d:%2d]=%2x, ", IOdly_in_shf+3, IOdly_in_shf, IOdly_in);
-
-	if (Enable_RMII) fprintf(fp_log, "Tx:SCU48[   %2d]=%01x: ", IOdly_out_shf, IOdly_out);
-	else             fprintf(fp_log, "Tx:SCU48[%2d:%2d]=%01x: ", IOdly_out_shf+3, IOdly_out_shf, IOdly_out);
-
-	if (dlymap[IOdly_i][IOdly_j]) fprintf(fp_log, " X\n");
-	else                          fprintf(fp_log, " O\n");
-#endif
-#endif
-}
 
 //------------------------------------------------------------
 // main
@@ -1888,15 +1708,6 @@ void TestingSetup (void) {
 	    Debug_delay();
     #endif
 
-  #ifdef SLT_UBOOT
-  #else
-    #ifdef Rand_Sed
-	srand((unsigned) Rand_Sed);
-    #else
-	srand((unsigned) timestart);
-    #endif
-  #endif
-
     //[Disable VGA]--------------------
     #ifdef Disable_VGA
 	if ( LOOP_INFINI & ~(BurstEnable || IOTiming) ) {
@@ -1922,11 +1733,7 @@ char TestingLoop (ULONG loop_checknum) {
     char	looplast;
     char	checken;
 
-    #ifdef SLT_UBOOT
-    #else
-        clock_t	timeold;
-    #endif
-
+ 
 	#ifdef  DbgPrn_FuncHeader
 	    printf ("TestingLoop: %d\n", Loop);
 	    Debug_delay();
@@ -1942,11 +1749,6 @@ char TestingLoop (ULONG loop_checknum) {
 	looplast = 0;
 
 	setup_des( 0 );
-
-    #ifdef SLT_UBOOT
-    #else
-	timeold = clock();
-    #endif
 
 	while ( (Loop < LOOP_MAX) || LOOP_INFINI ) {
 		looplast = !LOOP_INFINI && (Loop == LOOP_MAX - 1);
@@ -1992,36 +1794,13 @@ char TestingLoop (ULONG loop_checknum) {
 
 		//[Check Buf]--------------------
 		if ( RxDataEnable && checken ) {
-            #ifdef SLT_UBOOT
-            #else
-            timeused = (clock() - timeold) / (double) CLK_TCK;
-            #endif
-
 			if ( checkprd ) {
-                #ifdef SLT_DOS
-                #else
-                  #ifdef SLT_UBOOT
-                  #else
-                printf("[run loop:%3d] BandWidth: %7.2f Mbps, %6.2f sec\n", loop_checknum, ((double)loop_checknum * (double)DES_NUMBER * Avg_frame_len * 8.0) / ((double)timeused * 1000000.0), timeused);
-                fprintf(fp_log, "[run loop:%3d] BandWidth: %7.2f Mbps, %6.2f sec\n", loop_checknum, ((double)loop_checknum * (double)DES_NUMBER * Avg_frame_len * 8.0) / ((double)timeused * 1000000.0), timeused);
-                  #endif
-                #endif
-
                 #ifdef CheckRxBuf
                 if ( check_buf( loop_checknum ) )
                     return(1);
                 #endif
 			}
 			else {
-                #ifdef SLT_DOS
-                #else
-                  #ifdef SLT_UBOOT
-                  #else
-                printf("[run loop:%3d] BandWidth: %7.2f Mbps, %6.2f sec\n", (LOOP_MAX % loop_checknum), ((double)(LOOP_MAX % loop_checknum) * (double)DES_NUMBER * Avg_frame_len * 8.0) / ((double)timeused * 1000000.0), timeused);
-                fprintf(fp_log, "[run loop:%3d] BandWidth: %7.2f Mbps, %6.2f sec\n", (LOOP_MAX % loop_checknum), ((double)(LOOP_MAX % loop_checknum) * (double)DES_NUMBER * Avg_frame_len * 8.0) / ((double)timeused * 1000000.0), timeused);
-                  #endif
-                #endif
-
                 #ifdef CheckRxBuf
                 if ( check_buf( ( LOOP_MAX % loop_checknum ) ) )
                     return(1);
@@ -2032,14 +1811,6 @@ char TestingLoop (ULONG loop_checknum) {
             #else
             if ( !looplast )
                 setup_des_loop( Loop );
-            #endif
-
-            #ifdef SLT_DOS
-            #else
-              #ifdef SLT_UBOOT
-              #else
-		timeold = clock();
-              #endif
             #endif
 
 		} // End if ( RxDataEnable && checken )

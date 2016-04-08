@@ -25,25 +25,13 @@ static const char ThisFile[] = "IO.c";
   #include <sys/mman.h>
   #include <sys/io.h>
 #endif
-#ifdef SLT_UBOOT
-  #include <common.h>
-  #include <command.h>
-  #include <post.h>
-  #include <malloc.h>
-  #include <net.h>
-  #include "COMMINF.H"
-#endif
-#ifdef SLT_DOS
-  #include <stdlib.h>
-  #include <stdio.h>
-  #include <time.h>
-  #include <conio.h>
-  #include <dos.h>
-  #include <mem.h>
-  #include "TYPEDEF.H"
-  #include "LIB.H"
-  #include "COMMINF.H"
-#endif
+
+#include <common.h>
+#include <command.h>
+#include <post.h>
+#include <malloc.h>
+#include <net.h>
+#include "COMMINF.H"
 
 #include "TYPEDEF.H"
 #include "IO.H"
@@ -296,7 +284,6 @@ ULONG mm_read (ULONG addr, BYTE jmode)
 //------------------------------------------------------------
 // General Access API
 //------------------------------------------------------------
-#ifdef SLT_UBOOT
 BYTE Check_BEorLN ( ULONG chkaddr )
 {
     BYTE ret = BIG_ENDIAN_ADDRESS;
@@ -316,40 +303,20 @@ BYTE Check_BEorLN ( ULONG chkaddr )
 
     return ret;
 }
-#endif
 
 void WriteSOC_DD(ULONG addr, ULONG data)
 {
-#ifdef SLT_UBOOT
     if ( Check_BEorLN( addr ) == BIG_ENDIAN_ADDRESS )
         *(volatile unsigned long *)(addr) = cpu_to_le32(data);
     else
         *(volatile unsigned long *)(addr) = data;
-#else
-    #ifdef USE_LPC
-        lpc_write(addr, data, 2);
-    #endif
-    #ifdef USE_P2A
-        mm_write(addr, data, 2);
-    #endif
-#endif
 }
 
 //------------------------------------------------------------
 ULONG ReadSOC_DD(ULONG addr)
 {
-#ifdef SLT_UBOOT
     if ( Check_BEorLN( addr ) == BIG_ENDIAN_ADDRESS )
         return le32_to_cpu(*(volatile unsigned long *) (addr));
     else
         return (*(volatile unsigned long *) (addr));
-#else
-    #ifdef USE_LPC
-        return (lpc_read(addr, 2));
-    #endif
-    #ifdef USE_P2A
-        return (mm_read(addr, 2));
-    #endif
-#endif
-    return 0;
 }

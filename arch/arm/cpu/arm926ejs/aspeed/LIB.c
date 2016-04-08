@@ -13,18 +13,8 @@ static const char ThisFile[] = "LIB.c";
 
 #include "SWFUNC.H"
 
-#ifdef SLT_UBOOT
-  #include <common.h>
-  #include <command.h>
-#endif
-#ifdef SLT_DOS
-#include <stdlib.h>
-#include <stdio.h>
-#include <time.h>
-#include <conio.h>
-#include <dos.h>
-#include <mem.h>
-#endif
+#include <common.h>
+#include <command.h>
 
 #include "LIB.H"
 #include "TYPEDEF.H"
@@ -115,69 +105,4 @@ ULONG FindPCIDevice (USHORT usVendorID, USHORT usDeviceID, USHORT usBusType)
       return 0;
     }
 } // End ULONG FindPCIDevice (USHORT usVendorID, USHORT usDeviceID, USHORT usBusType)
-#endif
-//------------------------------------------------------------
-// Allocate Resource
-//------------------------------------------------------------
-#ifdef SLT_DOS
-ULONG InitDOS32()
-{
-  union REGS regs ;
-
-  regs.w.ax = 0xee00;
-  INTFUNC(0x31, &regs, &regs) ;
-
-  if(regs.w.ax >= 0x301)    // DOS32 version >= 3.01 ?
-    return 1;
-  else
-    return 0;
-}
-
-//------------------------------------------------------------
-USHORT CheckDOS()
-{
-    union REGS  regs;
-
-    regs.w.ax = 0xeeff;
-    int386(0x31, &regs, &regs);
-    if (regs.x.eax == 0x504d4457)
-    {
-        return 0;
-    } else {
-        printf("PMODEW Init. fail\n");
-        return 1;
-    }
-}
-
-//------------------------------------------------------------
-ULONG MapPhysicalToLinear (ULONG ulBaseAddress, ULONG ulSize)
-{
-  union REGS regs;
-
-  regs.w.ax = 0x0800;                        // map physcial memory
-  regs.w.bx = ulBaseAddress >> 16;           // bx:cx = physical address
-  regs.w.cx = ulBaseAddress;
-  regs.w.si = ulSize >> 16;                  // si:di = mapped memory block size
-  regs.w.di = ulSize;
-  INTFUNC(0x31, &regs, &regs);               // int386(0x31, &regs, &regs);
-  if (regs.w.cflag == 0)
-    return (ULONG) (regs.w.bx << 16 + regs.w.cx);  // Linear Addr = bx:cx
-  else
-    return 0;
-}
-
-//------------------------------------------------------------
-USHORT FreePhysicalMapping(ULONG udwLinAddress)
-{
-    union REGS regs;
-
-    regs.w.ax = 0x0801;
-    regs.w.bx = udwLinAddress >> 16;
-    regs.w.cx = udwLinAddress & 0xFFFF;
-    int386(0x31, &regs, &regs);
-
-    if (regs.x.cflag)
-        return ((USHORT) 0);
-    else return ((USHORT) 1);
-}
 #endif

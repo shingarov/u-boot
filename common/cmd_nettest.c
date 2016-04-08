@@ -13,7 +13,6 @@
 #include <command.h>
 #include <COMMINF.H>
 
-#ifdef SLT_UBOOT
 extern int main_function(int argc, char *argv[]);
 
 int do_mactest (cmd_tbl_t * cmdtp, int flag, int argc, char *argv[])
@@ -209,5 +208,3 @@ U_BOOT_CMD(
     "phyw    - Write PHY register. (phyw mac addr reg data)\n",
     NULL
 );
-
-#endif // End SLT_UBOOT

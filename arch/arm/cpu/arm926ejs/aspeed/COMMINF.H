@@ -13,16 +13,6 @@
 
 #include "SWFUNC.H"
 
-#if defined(LinuxAP)
-#endif
-#ifdef SLT_UBOOT
-#endif
-#ifdef SLT_DOS
-  #include <stdio.h>
-  #include <time.h>
-  #include <dos.h>    // For delay()
-#endif
-
 #include "TYPEDEF.H"
 #include "LIB.H"
 
@@ -34,48 +24,21 @@
 #define FP_IO     1
 #define STD_OUT   2
 
-#ifdef SLT_UBOOT
-    #define PRINT     printf
-    #define OUT_OBJ
-    #define FILE_VAR
+#define PRINT     printf
+#define OUT_OBJ
+#define FILE_VAR
 
-    #define GET_OBJ( i )    \
-    do {                    \
-        if ( i != STD_OUT ) \
-            return;         \
-    } while ( 0 );
-
-#else
-    #define PRINT     fprintf
-    #define OUT_OBJ   fp,
-    #define FILE_VAR  FILE *fp;
-
-    #define GET_OBJ( i )     \
-        switch( i ) {        \
-            case FP_LOG:     \
-                fp = fp_log; \
-                break;       \
-            case FP_IO:      \
-                fp = fp_io;  \
-                break;       \
-            case STD_OUT:    \
-                fp = stdout; \
-                break;       \
-            default : break; \
-        }
-#endif
+#define GET_OBJ( i )    \
+	do {                    \
+		if ( i != STD_OUT ) \
+		return;         \
+	} while ( 0 );
 
 //---------------------------------------------------------
 // Function
 //---------------------------------------------------------
-#ifdef SLT_UBOOT
-    #define DELAY( x )  udelay( x * 1000 ) // For Uboot, the unit of udelay() is us.
-    #define GET_CAHR    getc
-#endif
-#ifdef SLT_DOS
-    #define DELAY( x )  delay( x )         // For DOS, the unit of delay() is ms.
-    #define GET_CAHR    getchar
-#endif
+#define DELAY( x )  udelay( x * 1000 ) // For Uboot, the unit of udelay() is us.
+#define GET_CAHR    getc
 
 //---------------------------------------------------------
 // Default argument
@@ -284,18 +247,6 @@
 #define SCU_48h_AST1010           0x00000200
 #define SCU_48h_AST2300           0x00222255
 
-//#ifdef SLT_DOS
-//  #define SCU_80h               0x00000000
-//  #define SCU_88h               0x00000000
-//  #define SCU_90h               0x00000000
-//  #define SCU_74h               0x00000000
-//#else
-//  #define SCU_80h               0x0000000f     //AST2300[3:0]MAC1~4 PHYLINK
-//  #define SCU_88h               0xc0000000     //AST2300[31]MAC1 MDIO, [30]MAC1 MDC
-//  #define SCU_90h               0x00000004     //AST2300[2 ]MAC2 MDC/MDIO
-//  #define SCU_74h               0x06300000     //AST3000[20]MAC2 MDC/MDIO, [21]MAC2 MII, [25]MAC1 PHYLINK, [26]MAC2 PHYLINK
-//#endif
-
 //---------------------------------------------------------
 // DMA Buffer information
 //---------------------------------------------------------
@@ -445,14 +396,6 @@ GLOBAL  char phy_ncsi (void);
 
 GLOBAL  ULONG    NCSI_DiSChannel;
 
-//
-#ifdef SLT_UBOOT
-#else
-// SLT_DOS
-GLOBAL  FILE        *fp_log;
-GLOBAL  FILE        *fp_io;
-#endif
-
 GLOBAL  CHAR        dlymap[16][16];
 GLOBAL  CHAR        PrintNCSIEn;
 GLOBAL  ULONG       ARPNumCnt;
@@ -562,11 +505,6 @@ GLOBAL  BYTE        valary[16];
 #define MODE_DEDICATED      0x01
 #define MODE_NSCI           0x02
 GLOBAL  CHAR        ModeSwitch;
-
-#ifdef SLT_UBOOT
-#else
-    GLOBAL  time_t      timestart;
-#endif
 
 #ifdef SPI_BUS
     GLOBAL ULONG   mmiobase;

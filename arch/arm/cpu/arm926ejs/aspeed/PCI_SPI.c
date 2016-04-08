@@ -13,17 +13,8 @@ static const char ThisFile[] = "PCI_SPI.c";
 
 #include "SWFUNC.H"
 
-#ifdef SLT_UBOOT
-  #include <common.h>
-  #include <command.h>
-#endif
-#ifdef SLT_DOS
-  #include <stdio.h>
-  #include <stdlib.h>
-  #include <conio.h>
-  #include <string.h>
-  #include <dos.h>
-#endif
+#include <common.h>
+#include <command.h>
 
 #include "DEF_SPI.H"
 #include "LIB.H"

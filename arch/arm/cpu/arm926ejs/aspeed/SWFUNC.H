@@ -11,34 +11,20 @@
 #ifndef SWFUNC_H
 #define SWFUNC_H
 
-#define SLT_UBOOT
-
 /* == Step 4:==========   Select PHY    ================== */
 //#define SUPPORT_PHY_LAN9303        // Initial PHY via I2C bus
 #define LAN9303_I2C_BUSNUM      6  // 1-based
 #define LAN9303_I2C_ADR         0x14
 
 /* =================  Check setting  ===================== */
-#ifdef SLT_UBOOT
-    #ifdef SLT_DOS
-        #error Can NOT support two OS
-    #endif
-#endif
-
 #ifdef USE_P2A
-    #ifdef SLT_UBOOT
         #error Can NOT be set PCI bus in Uboot
-    #endif
 #endif
 #ifdef USE_LPC
-    #ifdef SLT_UBOOT
         #error Can NOT be set LPC bus in Uboot
-    #endif
 #endif
 #ifdef SPI_BUS
-    #ifdef SLT_UBOOT
         #error Can NOT be set SPI bus in Uboot
-    #endif
 #endif
 
 /* ======================== Program flow control ======================== */

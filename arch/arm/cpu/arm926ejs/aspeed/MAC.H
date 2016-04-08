@@ -31,18 +31,8 @@
   #include <sys/mman.h>
   #include <sys/io.h>
 #endif
-#ifdef SLT_UBOOT
-  #include <common.h>
-  #include <command.h>
-#endif
-#ifdef SLT_DOS
-  #include <stdio.h>
-  #include <stdlib.h>
-  #include <time.h>
-  #include <conio.h>
-  #include <dos.h>
-  #include <mem.h>
-#endif
+#include <common.h>
+#include <command.h>
 
 #include "NCSI.H"
 #include "IO.H"

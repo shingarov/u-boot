@@ -13,31 +13,18 @@ static const char ThisFile[] = "MACTEST.c";
 
 #include "SWFUNC.H"
 
-#ifdef SLT_UBOOT
-  #include <common.h>
-  #include <command.h>
-  #include <post.h>
-  #include <malloc.h>
-  #include <net.h>
-  #include "COMMINF.H"
-  #include "IO.H"
-#else
-  #include <stdlib.h>
-  #include <string.h>
-  #include "LIB.H"
-  #include "COMMINF.H"
-  #include "IO.H"
-#endif
+#include <common.h>
+#include <command.h>
+#include <post.h>
+#include <malloc.h>
+#include <net.h>
+#include "COMMINF.H"
+#include "IO.H"
 
 const  BYTE        Val_Array[16]    = {0,1, 2,3, 4,5, 6,7, 8,9, 10,11, 12,13, 14,15}; // AST2300-A1
 const  BYTE        Val_Array_A0[16] = {8,1, 10,3, 12,5, 14,7, 0,9, 2,11, 4,13, 6,15}; // AST2300-A0
 
-#ifdef SLT_UBOOT
 int main_function(int argc, char *argv[])
-#endif
-#ifdef SLT_DOS
-int main(int argc, char *argv[])
-#endif
 {
     CHAR    MAC2_Valid;
     CHAR    MAC_1GEn;
@@ -67,11 +54,6 @@ int main(int argc, char *argv[])
     // ( USE_P2A | USE_LPC )
     UCHAR   *ulMMIOLinearBaseAddress;
 #endif
-
-    #ifdef SLT_UBOOT
-    #else
-        time(&timestart);
-    #endif
 
 //------------------------------------------------------------
 // Argument Initial
@@ -456,28 +438,6 @@ Error_Test_Mode:
                     sprintf(FileNameMain, "%dE", SelectMAC+1);
             }
 
-            #ifndef SLT_UBOOT
-            if ( IOTiming ) {
-                if ( IOStrength )
-                    sprintf(FileName, "MIOD%sS.log", FileNameMain);
-                else
-                    sprintf(FileName, "MIOD%s.log", FileNameMain);
-
-                fp_log = fopen(FileName,"w");
-
-                if ( IOStrength )
-                    sprintf(FileName, "MIO%sS.log", FileNameMain);
-                else
-                    sprintf(FileName, "MIO%s.log", FileNameMain);
-
-                fp_io  = fopen(FileName,"w");
-            }
-            else {
-                sprintf(FileName, "MAC%s.log", FileNameMain);
-
-                fp_log = fopen(FileName,"w");
-            }
-            #endif
         } // End if (BurstEnable)
 
 //------------------------------------------------------------
@@ -962,19 +922,6 @@ NCSI_LOOP_INFINI:;
                             //printf("SCU90h: %08x ->", ReadSOC_DD(SCU_BASE+0x90));
                             WriteSOC_DD( SCU_BASE + 0x90, IOStr_val );
                             //printf(" %08x\n", ReadSOC_DD(SCU_BASE+0x90));
-
-                            #ifndef SLT_UBOOT
-                            if      (GSpeed_sel[0]) fprintf(fp_log, "[Strength %d][1G  ]========================================\n", IOStr_i);
-                            else if (GSpeed_sel[1]) fprintf(fp_log, "[Strength %d][100M]========================================\n", IOStr_i);
-                            else                    fprintf(fp_log, "[Strength %d][10M ]========================================\n", IOStr_i);
-                            #endif
-                        }
-                        else {
-                            #ifndef SLT_UBOOT
-                            if      (GSpeed_sel[0]) fprintf(fp_log, "[1G  ]========================================\n");
-                            else if (GSpeed_sel[1]) fprintf(fp_log, "[100M]========================================\n");
-                            else                    fprintf(fp_log, "[10M ]========================================\n");
-                            #endif
                         }
 
                         if ( IOTimingBund )
@@ -1090,21 +1037,12 @@ NCSI_LOOP_INFINI:;
                                     }
                                 }
 
-                                PrintIO_Line_LOG();
                                 FPri_ErrFlag(FP_LOG);
 
 //                              Err_Flag_allapeed = Err_Flag_allapeed | Err_Flag;
                                 Err_Flag = 0;
                             }
                         }// End for (IOdly_j = IOdly_out_str; IOdly_j <= IOdly_out_end; IOdly_j+=IOdly_incval)
-#ifndef SLT_UBOOT
-                        if ( IOTiming || IOTimingBund ) {
-                            if ( IOTimingBund )
-                                fprintf(fp_log, "\n");
-                            if (IOTiming    )
-                                fprintf(fp_io, "\n");
-                        }
-#endif
                         printf("\n");
                     } // End for (IOdly_j = IOdly_out_str; IOdly_j <= IOdly_out_end; IOdly_j+=IOdly_incval)
 
@@ -1132,27 +1070,6 @@ NCSI_LOOP_INFINI:;
 #endif
                             {
                                 if ( dlymap[IOdly_i][IOdly_j] ) {
-#ifdef SLT_DOS
-                                    if ( IOTiming ) {
-#ifdef Enable_Old_Style
-                                        for (i = IOdly_i_min; i <= IOdly_i_max; i++)
-#else
-                                        for (j = IOdly_j_min; j <= IOdly_j_max; j++)
-#endif
-                                        {
-#ifdef Enable_Old_Style
-                                            for (j = IOdly_j_min; j <= IOdly_j_max; j++)
-#else
-                                            for (i = IOdly_i_min; i <= IOdly_i_max; i++)
-#endif
-                                            {
-                                                if (dlymap[i][j]) fprintf(fp_io, "x ");
-                                                else              fprintf(fp_io, "o ");
-                                            }
-                                            fprintf(fp_io, "\n");
-                                        }
-                                    } // End if ( IOTiming )
-#endif // End SLT_DOS
                                     FindErr(Err_IOMargin);
                                     goto Find_Err_IOMargin;
                                 } // End if ( dlymap[IOdly_i][IOdly_j] )

@@ -13,18 +13,9 @@ static const char ThisFile[] = "PHY.c";
 
 #include "SWFUNC.H"
 
-#ifdef SLT_UBOOT
-  #include <common.h>
-  #include <command.h>
-  #include "COMMINF.H"
-#endif
-#ifdef SLT_DOS
-  #include <stdio.h>
-  #include <stdlib.h>
-  #include <conio.h>
-  #include <string.h>
-  #include "COMMINF.H"
-#endif
+#include <common.h>
+#include <command.h>
+#include "COMMINF.H"
 
 #include "PHY.H"
 #include "TYPEDEF.H"
@@ -53,9 +44,6 @@ void phy_write (int adr, ULONG data) {
 		while ( ReadSOC_DD( MAC_PHYBASE + 0x60 ) & MAC_PHYBusy_New ) {
 			if ( ++timeout > TIME_OUT_PHY_RW ) {
 				if (!BurstEnable)
-#ifdef SLT_DOS
-                    fprintf(fp_log, "[PHY-Write] Time out: %08lx\n", ReadSOC_DD( MAC_PHYBASE + 0x60 ) );
-#endif
                     FindErr( Err_PHY_TimeOut );
 				break;
 			}
@@ -68,10 +56,6 @@ void phy_write (int adr, ULONG data) {
 
 		while ( ReadSOC_DD( MAC_PHYBASE + 0x60 ) & MAC_PHYWr ) {
 			if ( ++timeout > TIME_OUT_PHY_RW ) {
-#ifdef SLT_DOS
-                if (!BurstEnable)
-				    fprintf(fp_log, "[PHY-Write] Time out: %08lx\n", ReadSOC_DD( MAC_PHYBASE + 0x60 ) );
-#endif
                 FindErr( Err_PHY_TimeOut );
 				break;
 			}
@@ -92,9 +76,6 @@ ULONG phy_read (int adr) {
 		while ( ReadSOC_DD( MAC_PHYBASE + 0x60 ) & MAC_PHYBusy_New ) {
 			if ( ++timeout > TIME_OUT_PHY_RW ) {
 				if ( !BurstEnable )
-#ifdef SLT_DOS
-                    fprintf(fp_log, "[PHY-Read] Time out: %08lx\n", ReadSOC_DD( MAC_PHYBASE + 0x60 ));
-#endif
                     FindErr( Err_PHY_TimeOut );
 				break;
 			}
@@ -108,10 +89,6 @@ ULONG phy_read (int adr) {
 
 		while ( ReadSOC_DD( MAC_PHYBASE + 0x60 ) & MAC_PHYRd ) {
 			if ( ++timeout > TIME_OUT_PHY_RW ) {
-#ifdef SLT_DOS
-                if ( !BurstEnable )
-				    fprintf( fp_log, "[PHY-Read] Time out: %08lx\n", ReadSOC_DD( MAC_PHYBASE + 0x60 ) );
-#endif
                 FindErr( Err_PHY_TimeOut );
 				break;
 			}
@@ -213,9 +190,6 @@ void phy_Wait_Reset_Done (void) {
 		    printf ("00: %04lx\n", phy_read( PHY_REG_BMCR ));
 
 		if (++timeout > TIME_OUT_PHY_Rst) {
-#ifdef SLT_DOS
-            if (!BurstEnable) fprintf(fp_log, "[PHY-Reset] Time out: %08lx\n", ReadSOC_DD(MAC_PHYBASE+0x60));
-#endif
             FindErr(Err_PHY_TimeOut);
 			break;
 		}
@@ -324,13 +298,6 @@ void phy_marvell0 (int loop_phy) {//88E1310
     PHY_15h = phy_read(21);
 	if (PHY_15h & 0x0030) {
 		printf ("\n\n[Warning] Page2, Register 21, bit 4~5 must be 0 [Reg15_2:%04lx]\n\n", PHY_15h);
-#ifdef SLT_DOS
-        if ( IOTiming    )
-		    fprintf (fp_io, "\n\n[Warning] Page2, Register 21, bit 4~5 must be 0 [Reg15_2:%04lx]\n\n", PHY_15h);
-		if ( !BurstEnable)
-		    fprintf (fp_log, "\n\n[Warning] Page2, Register 21, bit 4~5 must be 0 [Reg15_2:%04lx]\n\n", PHY_15h);
-#endif
-//		phy_Read_Write(21, 0x0030, 0x0000);//clr set//[5]Rx Dly, [4]Tx Dly
         phy_write(21, PHY_15h & 0xffcf); // Set [5]Rx Dly, [4]Tx Dly to 0
 	}
 	phy_write(22, 0x0000);
@@ -455,12 +422,6 @@ void phy_marvell2 (int loop_phy) {//88E1512
 
 	if ( PHY_15h & 0x0030 ) {
 		printf ("\n\n[Warning] Page2, Register 21, bit 4~5 must be 0 [Reg15h_2:%04lx]\n\n", PHY_15h);
-#ifdef SLT_DOS
-        if (IOTiming    ) fprintf (fp_io, "\n\n[Warning] Page2, Register 21, bit 4~5 must be 0 [Reg15h_2:%04lx]\n\n", PHY_15h);
-		if (!BurstEnable) fprintf (fp_log, "\n\n[Warning] Page2, Register 21, bit 4~5 must be 0 [Reg15h_2:%04lx]\n\n", PHY_15h);
-#endif
-        //		phy_Read_Write(21, 0x0030, 0x0000);//clr set//[5]Rx Dly, [4]Tx Dly
-//		phy_write(21, PHY_15h & 0xffcf);
 	}
 	phy_write(22, 0x0000);
 

@@ -12,17 +12,9 @@
 static const char ThisFile[] = "LAN9303.c";
 
 #include "SWFUNC.H"
-#ifdef SLT_UBOOT
-  #include "COMMINF.H"
-  #include "MAC.H"
-  #include "IO.H"
-#endif
-
-#ifdef SLT_DOS
-  #include "COMMINF.H"
-  #include <stdlib.h>
-  #include "IO.H"
-#endif
+#include "COMMINF.H"
+#include "MAC.H"
+#include "IO.H"
 
 #ifdef SUPPORT_PHY_LAN9303
 //#define LAN9303M
