@@ -52,6 +52,11 @@
 #include <fdt_support.h>
 #endif
 
+#if defined(CONFIG_CMD_SF)
+#include <spi.h>
+#include <spi_flash.h>
+#endif
+
 #ifdef CONFIG_LZMA
 #include <lzma/LzmaTypes.h>
 #include <lzma/LzmaDec.h>
@@ -337,8 +342,43 @@ static int bootm_load_os(image_info_t os, ulong *load_end, int boot_progress)
 			no_overlap = 1;
 		} else {
 			printf("   Loading %s ... ", type_name);
+			char *s;
+#ifdef AST_FMC_CS0_BASE			
+			if(((s = getenv("spi_dma")) != NULL) && (strcmp(s, "yes") == 0)) {
+				if((image_start >= AST_FMC_CS0_BASE) && (image_start < (AST_FMC_CS0_BASE + 0x10000000))) {
+#ifdef CONFIG_FMC_SPI
+					struct spi_slave *spi;
+					int ret;
+					spi = spi_setup_slave(0, 0, CONFIG_SF_DEFAULT_SPEED, CONFIG_ENV_SPI_MODE);
+					if (!spi) {
+						puts("Failed to set up slave\n");
+						return 0;
+					}
+
+					ret = spi_claim_bus(spi);
+					if (ret) {
+						puts("Failed to claim SPI bus\n");
+						return 0;
+					}
+					spi_dma(spi, (void *)load, (void *)image_start,
+							image_len);
+#else
+					memmove_dma((void *)load, (void *)image_start,
+							image_len);
+#endif
+				} else {
+					memmove_wd((void *)load, (void *)image_start,
+							image_len, CHUNKSZ);
+				}
+			} else {
+				memmove_wd((void *)load, (void *)image_start,
+						image_len, CHUNKSZ);
+			}
+#else
 			memmove_wd((void *)load, (void *)image_start,
 					image_len, CHUNKSZ);
+
+#endif
 		}
 		*load_end = load + image_len;
 		puts("OK\n");

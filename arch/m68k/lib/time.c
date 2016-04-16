@@ -1,11 +1,6 @@
 /*
- * (C) Copyright 2003 Josef Baumgartner <josef.baumgartner@telex.de>
- *
- * (C) Copyright 2000
- * Wolfgang Denk, DENX Software Engineering, wd@denx.de.
- *
- * See file CREDITS for list of people who contributed to this
- * project.
+ * Copyright (C) 2012-2020  ASPEED Technology Inc.
+ * Ryan Chen <ryan_chen@aspeedtech.com>
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License as
@@ -25,168 +20,124 @@
 
 #include <common.h>
 
-#include <asm/timer.h>
-#include <asm/immap.h>
-#include <watchdog.h>
+#include <asm/arch/platform.h>
+
 
 DECLARE_GLOBAL_DATA_PTR;
 
-static volatile ulong timestamp = 0;
+#define TIMER_LOAD_VAL 0xffffffff
 
-#ifndef CONFIG_SYS_WATCHDOG_FREQ
-#define CONFIG_SYS_WATCHDOG_FREQ (CONFIG_SYS_HZ / 2)
-#endif
+/* macro to read the 32 bit timer */
+#define READ_TIMER (*(volatile ulong *)(AST_TIMER_BASE))
 
-#if defined(CONFIG_MCFTMR)
-#ifndef CONFIG_SYS_UDELAY_BASE
-#	error	"uDelay base not defined!"
-#endif
+static ulong timestamp;
+static ulong lastdec;
 
-#if !defined(CONFIG_SYS_TMR_BASE) || !defined(CONFIG_SYS_INTR_BASE) || !defined(CONFIG_SYS_TMRINTR_NO) || !defined(CONFIG_SYS_TMRINTR_MASK)
-#	error	"TMR_BASE, INTR_BASE, TMRINTR_NO or TMRINTR_MASk not defined!"
-#endif
-extern void dtimer_intr_setup(void);
-
-void __udelay(unsigned long usec)
+void reset_timer_masked (void)
 {
-	volatile dtmr_t *timerp = (dtmr_t *) (CONFIG_SYS_UDELAY_BASE);
-	uint start, now, tmp;
-
-	while (usec > 0) {
-		if (usec > 65000)
-			tmp = 65000;
-		else
-			tmp = usec;
-		usec = usec - tmp;
-
-		/* Set up TIMER 3 as timebase clock */
-		timerp->tmr = DTIM_DTMR_RST_RST;
-		timerp->tcn = 0;
-		/* set period to 1 us */
-		timerp->tmr =
-		    CONFIG_SYS_TIMER_PRESCALER | DTIM_DTMR_CLK_DIV1 | DTIM_DTMR_FRR |
-		    DTIM_DTMR_RST_EN;
-
-		start = now = timerp->tcn;
-		while (now < start + tmp)
-			now = timerp->tcn;
-	}
+	/* reset time */
+	lastdec = READ_TIMER;  /* capure current decrementer value time */
+	timestamp = 0;	       /* start "advancing" time stamp from 0 */
 }
 
-void dtimer_interrupt(void *not_used)
+int timer_init (void)
 {
-	volatile dtmr_t *timerp = (dtmr_t *) (CONFIG_SYS_TMR_BASE);
+	*(volatile ulong *)(AST_TIMER_BASE + 4)    = TIMER_LOAD_VAL;
+	*(volatile ulong *)(AST_TIMER_BASE + 0x30) = 0x3;		/* enable timer1 */
 
-	/* check for timer interrupt asserted */
-	if ((CONFIG_SYS_TMRPND_REG & CONFIG_SYS_TMRINTR_MASK) == CONFIG_SYS_TMRINTR_PEND) {
-		timerp->ter = (DTIM_DTER_CAP | DTIM_DTER_REF);
-		timestamp++;
+	/* init the timestamp and lastdec value */
+	reset_timer_masked();
 
-		#if defined(CONFIG_WATCHDOG) || defined (CONFIG_HW_WATCHDOG)
-		if ((timestamp % (CONFIG_SYS_WATCHDOG_FREQ)) == 0) {
-			WATCHDOG_RESET ();
+	return 0;
+}
+ulong get_timer_masked (void)
+{
+        ulong now = READ_TIMER;         /* current tick value */
+
+        if (lastdec >= now) {           /* normal mode (non roll) */
+                /* normal mode */
+                timestamp += lastdec - now; /* move stamp fordward with absoulte diff ticks */
+        } else {                        /* we have overflow of the count down timer */
+                /* nts = ts + ld + (TLV - now)
+                 * ts=old stamp, ld=time that passed before passing through -1
+                 * (TLV-now) amount of time after passing though -1
+                 * nts = new "advancing time stamp"...it could also roll and cause problems.
+                 */
+                timestamp += lastdec + TIMER_LOAD_VAL - now;
+        }
+        lastdec = now;
+
+        return timestamp;
+}
+
+/*
+ * timer without interrupts
+ */
+ulong get_timer (ulong base)
+{
+	return get_timer_masked () - base;
+}
+
+/* delay x useconds AND preserve advance timestamp value */
+void __udelay (unsigned long usec)
+{
+		ulong tmo, tmp;
+
+		if(usec >= 1000){				/* if "big" number, spread normalization to seconds */
+				tmo = usec / 1000;		/* start to normalize for usec to ticks per sec */
+				tmo *= CONFIG_SYS_HZ;			/* find number of "ticks" to wait to achieve target */
+				tmo /= 1000;			/* finish normalize. */
+		}else{							/* else small number, don't kill it prior to HZ multiply */
+				tmo = usec * CONFIG_SYS_HZ;
+				tmo /= (1000*1000);
 		}
-		#endif    /* CONFIG_WATCHDOG || CONFIG_HW_WATCHDOG */
-		return;
-	}
-}
 
-int timer_init(void)
-{
-	volatile dtmr_t *timerp = (dtmr_t *) (CONFIG_SYS_TMR_BASE);
-
-	timestamp = 0;
-
-	timerp->tcn = 0;
-	timerp->trr = 0;
-
-	/* Set up TIMER 4 as clock */
-	timerp->tmr = DTIM_DTMR_RST_RST;
-
-	/* initialize and enable timer interrupt */
-	irq_install_handler(CONFIG_SYS_TMRINTR_NO, dtimer_interrupt, 0);
-
-	timerp->tcn = 0;
-	timerp->trr = 1000;	/* Interrupt every ms */
-
-	dtimer_intr_setup();
-
-	/* set a period of 1us, set timer mode to restart and enable timer and interrupt */
-	timerp->tmr = CONFIG_SYS_TIMER_PRESCALER | DTIM_DTMR_CLK_DIV1 |
-	    DTIM_DTMR_FRR | DTIM_DTMR_ORRI | DTIM_DTMR_RST_EN;
-
-	return 0;
-}
-
-ulong get_timer(ulong base)
-{
-	return (timestamp - base);
-}
-
-#endif				/* CONFIG_MCFTMR */
-
-#if defined(CONFIG_MCFPIT)
-#if !defined(CONFIG_SYS_PIT_BASE)
-#	error	"CONFIG_SYS_PIT_BASE not defined!"
-#endif
-
-static unsigned short lastinc;
-
-void __udelay(unsigned long usec)
-{
-	volatile pit_t *timerp = (pit_t *) (CONFIG_SYS_UDELAY_BASE);
-	uint tmp;
-
-	while (usec > 0) {
-		if (usec > 65000)
-			tmp = 65000;
+		tmp = get_timer (0);			/* get current timestamp */
+		if( (tmo + tmp + 1) < tmp ) 	/* if setting this fordward will roll time stamp */
+				reset_timer_masked ();	/* reset "advancing" timestamp to 0, set lastdec value */
 		else
-			tmp = usec;
-		usec = usec - tmp;
+				tmo += tmp; 			/* else, set advancing stamp wake up time */
 
-		/* Set up TIMER 3 as timebase clock */
-		timerp->pcsr = PIT_PCSR_OVW;
-		timerp->pmr = 0;
-		/* set period to 1 us */
-		timerp->pcsr |= PIT_PCSR_PRE(CONFIG_SYS_PIT_PRESCALE) | PIT_PCSR_EN;
+		while (get_timer_masked () < tmo)/* loop till event */
+				/*NOP*/;
+}
 
-		timerp->pmr = tmp;
-		while (timerp->pcntr > 0) ;
+
+/* waits specified delay value and resets timestamp */
+void udelay_masked (unsigned long usec)
+{
+	ulong tmo;
+	ulong endtime;
+	signed long diff;
+
+	if (usec >= 1000) {		/* if "big" number, spread normalization to seconds */
+		tmo = usec / 1000;	/* start to normalize for usec to ticks per sec */
+		tmo *= CONFIG_SYS_HZ;		/* find number of "ticks" to wait to achieve target */
+		tmo /= 1000;		/* finish normalize. */
+	} else {			/* else small number, don't kill it prior to HZ multiply */
+		tmo = usec * CONFIG_SYS_HZ;
+		tmo /= (1000*1000);
 	}
+
+	endtime = get_timer_masked () + tmo;
+
+	do {
+		ulong now = get_timer_masked ();
+		diff = endtime - now;
+	} while (diff >= 0);
 }
 
-void timer_init(void)
+void reset_timer (void)
 {
-	volatile pit_t *timerp = (pit_t *) (CONFIG_SYS_PIT_BASE);
-	timestamp = 0;
-
-	/* Set up TIMER 4 as poll clock */
-	timerp->pcsr = PIT_PCSR_OVW;
-	timerp->pmr = lastinc = 0;
-	timerp->pcsr |= PIT_PCSR_PRE(CONFIG_SYS_PIT_PRESCALE) | PIT_PCSR_EN;
-
-	return 0;
+	reset_timer_masked ();
 }
 
-ulong get_timer(ulong base)
+
+
+void set_timer (ulong t)
 {
-	unsigned short now, diff;
-	volatile pit_t *timerp = (pit_t *) (CONFIG_SYS_PIT_BASE);
-
-	now = timerp->pcntr;
-	diff = -(now - lastinc);
-
-	timestamp += diff;
-	lastinc = now;
-	return timestamp - base;
+	timestamp = t;
 }
-
-void wait_ticks(unsigned long ticks)
-{
-	u32 start = get_timer(0);
-	while (get_timer(start) < ticks) ;
-}
-#endif				/* CONFIG_MCFPIT */
 
 /*
  * This function is derived from PowerPC code (read timebase as long long).
@@ -209,6 +160,7 @@ unsigned long usec2ticks(unsigned long usec)
 ulong get_tbclk(void)
 {
 	ulong tbclk;
+
 	tbclk = CONFIG_SYS_HZ;
 	return tbclk;
 }

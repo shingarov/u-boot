@@ -154,6 +154,10 @@ else
     BOARDDIR=${vendor}/${board}
 fi
 
+if [ "${vendor}" = "aspeed" ] && [ "${arch}" = "m68k" ] ; then
+	rm -rf ${SRCTREE}/arch/m68k/include/asm/arch-aspeed
+	ln -s ${SRCTREE}/arch/arm/include/asm/arch-aspeed ${SRCTREE}/arch/m68k/include/asm/arch-aspeed
+fi
 #
 # Create board specific header file
 #

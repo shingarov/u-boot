@@ -225,6 +225,10 @@ static inline
 int abortboot(int bootdelay)
 {
 	int abort = 0;
+#ifdef CONFIG_BOOTLOADER_PRESSKEY
+	int specifiedPressKey = 0;
+#endif
+
 
 #ifdef CONFIG_MENUPROMPT
 	printf(CONFIG_MENUPROMPT);
@@ -254,14 +258,27 @@ int abortboot(int bootdelay)
 		/* delay 100 * 10ms */
 		for (i=0; !abort && i<100; ++i) {
 			if (tstc()) {	/* we got a key press	*/
+#ifndef CONFIG_BOOTLOADER_PRESSKEY
 				abort  = 1;	/* don't auto boot	*/
 				bootdelay = 0;	/* no more delay	*/
+#endif				
 # ifdef CONFIG_MENUKEY
 				menukey = getc();
 # else
-				(void) getc();  /* consume input	*/
+#ifndef CONFIG_BOOTLOADER_PRESSKEY
+				(void) getc();	/* consume input	*/
+#else
+				specifiedPressKey = getc();
+				if(specifiedPressKey == CONFIG_BOOTLOADER_PRESSKEY) {
+					abort = 1;
+					bootdelay = 0;
+					break;
+				}
+#endif
 # endif
+#ifndef CONFIG_BOOTLOADER_PRESSKEY
 				break;
+#endif
 			}
 			udelay(10000);
 		}

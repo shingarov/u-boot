@@ -25,6 +25,10 @@ EXPORT_FUNC(strcmp)
 EXPORT_FUNC(i2c_write)
 EXPORT_FUNC(i2c_read)
 EXPORT_FUNC(spi_init)
+#ifdef CONFIG_FMC_SPI
+EXPORT_FUNC(spi_dma)
+#endif
+EXPORT_FUNC(memmove_dma)
 EXPORT_FUNC(spi_setup_slave)
 EXPORT_FUNC(spi_free_slave)
 EXPORT_FUNC(spi_claim_bus)

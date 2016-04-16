@@ -664,6 +664,32 @@ int pci_hose_scan_bus(struct pci_controller *hose, int bus)
 		pci_hose_read_config_word(hose, dev, PCI_DEVICE_ID, &device);
 		pci_hose_read_config_word(hose, dev, PCI_CLASS_DEVICE, &class);
 
+#if 0		
+		if((bus == 0) && (vendor == 0x1a03) && (device == 0x1150)) {
+			//For AST1150 Host bridge configuration ..
+			pci_hose_write_config_dword(hose, dev, PCI_COMMAND, 0x00000147);
+			pci_hose_write_config_dword(hose, dev, PCI_BASE_ADDRESS_2, 0x00020100);
+			pci_hose_write_config_dword(hose, dev, PCI_BASE_ADDRESS_4, 0x7fff7000);
+		}
+
+		if((bus == 1) && (vendor == 0x1a03) && (device == 0x1150)) {
+			//For AST1150 Host bridge configuration ..
+			pci_hose_write_config_dword(hose, dev, PCI_COMMAND, 0x00000147);
+			pci_hose_write_config_dword(hose, dev, PCI_BASE_ADDRESS_2, 0x00020201);
+			pci_hose_write_config_dword(hose, dev, PCI_BASE_ADDRESS_4, 0x7fff7000);
+			pci_hose_write_config_dword(hose, dev, PCI_CB_SUBSYSTEM_VENDOR_ID, 0xAB1EB904);
+			pci_hose_write_config_dword(hose, dev, PCI_CB_SUBSYSTEM_VENDOR_ID, 0xAB1EB905);
+			pci_hose_write_config_dword(hose, dev, PCI_CB_SUBSYSTEM_VENDOR_ID, 0xAB1EB906);
+			pci_hose_write_config_dword(hose, dev, PCI_CB_SUBSYSTEM_VENDOR_ID, 0xAB1EB917);
+			pci_hose_write_config_dword(hose, dev, PCI_CB_SUBSYSTEM_VENDOR_ID, 0xAB1EB918);
+		}
+
+		if((bus == 2) && (vendor == 0x1a03) && (device == 0x2402)) {
+			//For AST1150 Host bridge configuration ..
+			pci_hose_write_config_dword(hose, dev, PCI_BASE_ADDRESS_0, 0x70000000);
+		}
+#endif
+		
 #ifdef CONFIG_PCI_SCAN_SHOW
 		indent++;
 

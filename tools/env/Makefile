@@ -40,15 +40,19 @@ ifeq ($(MTD_VERSION),old)
 HOSTCPPFLAGS += -DMTD_OLD
 endif
 
-all:	$(obj)fw_printenv
+all:	$(obj)fw_printenv $(obj)fw_setenv
 
 # Some files complain if compiled with -pedantic, use HOSTCFLAGS_NOPED
 $(obj)fw_printenv:	$(HOSTSRCS) $(HEADERS)
-	$(HOSTCC) $(HOSTCFLAGS_NOPED) $(HOSTLDFLAGS) -o $@ $(HOSTSRCS)
-	$(HOSTSTRIP) $@
+	$(CC) $(HOSTCFLAGS_NOPED) $(HOSTLDFLAGS) -o $@ $(HOSTSRCS)
+#	$(STRIP) $@
+
+$(obj)fw_setenv:	$(HOSTSRCS) $(HEADERS)
+	$(CC) $(HOSTCFLAGS_NOPED) $(HOSTLDFLAGS) -o $@ $(HOSTSRCS)
+#	$(STRIP) $@
 
 clean:
-	rm -f $(obj)fw_printenv
+	rm -f $(obj)fw_printenv $(obj)fw_printenv.gdb $(obj)fw_setenv $(obj)fw_setenv.gdb
 
 #########################################################################
 

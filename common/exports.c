@@ -34,6 +34,12 @@ unsigned long get_version(void)
 # define spi_claim_bus     dummy
 # define spi_release_bus   dummy
 # define spi_xfer          dummy
+#ifdef CONFIG_FMC_SPI
+# define spi_dma          dummy
+#endif
+#endif
+#ifndef CONFIG_AST_SPI_NOR
+# define memmove_dma          dummy
 #endif
 
 void jumptable_init(void)

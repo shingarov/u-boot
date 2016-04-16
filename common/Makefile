@@ -205,6 +205,10 @@ COBJS-$(CONFIG_CMD_DFU) += cmd_dfu.o
 COBJS-$(CONFIG_CMD_GPT) += cmd_gpt.o
 endif
 
+#AST MAC test command
+COBJS-$(CONFIG_CMD_NETTEST) += cmd_nettest.o
+COBJS-$(CONFIG_CMD_SLT) += cmd_slt.o
+
 ifdef CONFIG_SPL_BUILD
 COBJS-y += cmd_nvedit.o
 COBJS-y += env_common.o

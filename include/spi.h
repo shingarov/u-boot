@@ -81,6 +81,7 @@ void spi_init(void);
 struct spi_slave *spi_setup_slave(unsigned int bus, unsigned int cs,
 		unsigned int max_hz, unsigned int mode);
 
+void spi_dma(struct spi_slave *slave, void *to, void *from, size_t len);
 /*-----------------------------------------------------------------------
  * Free any memory associated with a SPI slave.
  *

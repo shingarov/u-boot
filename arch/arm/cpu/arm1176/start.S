@@ -36,11 +36,11 @@
 #ifdef CONFIG_ENABLE_MMU
 #include <asm/proc/domain.h>
 #endif
-
+/*
 #if !defined(CONFIG_ENABLE_MMU) && !defined(CONFIG_SYS_PHY_UBOOT_BASE)
 #define CONFIG_SYS_PHY_UBOOT_BASE	CONFIG_SYS_UBOOT_BASE
 #endif
-
+*/
 /*
  *************************************************************************
  *
@@ -60,6 +60,14 @@ _start: b	reset
 	ldr	pc, _irq
 	ldr	pc, _fiq
 
+#ifdef CONFIG_AST_SCURE_BOOT
+_ast_security_boot:
+	.word CONFIG_DSS_KEY_ADDR
+	.word CONFIG_SIMAGE_ADDR
+	.word CONFIG_SIMAGE_SIZE
+	.word CONFIG_SIGNATURE_ADDR
+#endif
+	
 _undefined_instruction:
 	.word undefined_instruction
 _software_interrupt:
@@ -105,9 +113,10 @@ _TEXT_BASE:
  * Without it, we cannot run code correctly before MMU is ON.
  * by scsuh.
  */
+/*
 _TEXT_PHY_BASE:
 	.word	CONFIG_SYS_PHY_UBOOT_BASE
-
+*/
 /*
  * These are defined in the board-specific linker script.
  * Subtracting _start from them lets the linker put their
@@ -182,8 +191,9 @@ cpu_init_crit:
 	orr	r0, r0, #0x00001000	@ set bit 12 (I) I-Cache
 
 	/* Prepare to disable the MMU */
-	adr	r2, mmu_disable_phys
-	sub	r2, r2, #(CONFIG_SYS_PHY_UBOOT_BASE - CONFIG_SYS_TEXT_BASE)
+	/* Ryan TODO ....*/
+#	adr	r2, mmu_disable_phys
+#	sub	r2, r2, #(CONFIG_SYS_PHY_UBOOT_BASE - CONFIG_SYS_TEXT_BASE)
 	b	mmu_disable
 
 	.align 5
@@ -192,7 +202,7 @@ mmu_disable:
 	mcr	p15, 0, r0, c1, c0, 0
 	nop
 	nop
-	mov	pc, r2
+#	mov	pc, r2
 mmu_disable_phys:
 
 #ifdef CONFIG_DISABLE_TCM

@@ -23,10 +23,10 @@
 
 VERSION = 2013
 PATCHLEVEL = 01
-SUBLEVEL =
+SUBLEVEL = $(shell test -e .git && git describe)
 EXTRAVERSION =
 ifneq "$(SUBLEVEL)" ""
-U_BOOT_VERSION = $(VERSION).$(PATCHLEVEL).$(SUBLEVEL)$(EXTRAVERSION)
+U_BOOT_VERSION = $(VERSION).$(PATCHLEVEL).$(SUBLEVEL)
 else
 U_BOOT_VERSION = $(VERSION).$(PATCHLEVEL)$(EXTRAVERSION)
 endif
@@ -352,6 +352,10 @@ ifeq ($(SOC),tegra20)
 LIBS-y += arch/$(ARCH)/cpu/$(SOC)-common/lib$(SOC)-common.o
 LIBS-y += arch/$(ARCH)/cpu/tegra-common/libcputegra-common.o
 LIBS-y += $(CPUDIR)/tegra-common/libtegra-common.o
+endif
+
+ifeq ($(SOC),aspeed)
+LIBS-y += arch/$(ARCH)/cpu/ast-common/libcpuast-common.o
 endif
 
 LIBS := $(addprefix $(obj),$(sort $(LIBS-y)))
@@ -818,7 +822,7 @@ clean:
 	       $(obj)examples/standalone/timer
 	@rm -f $(obj)examples/api/demo{,.bin}
 	@rm -f $(obj)tools/bmp_logo	   $(obj)tools/easylogo/easylogo  \
-	       $(obj)tools/env/{fw_printenv,fw_setenv}			  \
+	       $(obj)tools/env/{fw_printenv*,fw_setenv*}			  \
 	       $(obj)tools/envcrc					  \
 	       $(obj)tools/gdb/{astest,gdbcont,gdbsend}			  \
 	       $(obj)tools/gen_eth_addr    $(obj)tools/img2srec		  \
@@ -874,7 +878,9 @@ clobber:	tidy
 	@rm -f $(obj)tools/xway-swap-bytes
 	@rm -f $(obj)arch/powerpc/cpu/mpc824x/bedbug_603e.c
 	@rm -f $(obj)arch/powerpc/cpu/mpc83xx/ddr-gen?.c
-	@rm -fr $(obj)include/asm/proc $(obj)include/asm/arch $(obj)include/asm
+	@rm -f $(obj)arch/arm/cpu/arm1176/aspeed/asm-offsets.s
+	@rm -fr $(obj)include/asm/proc $(obj)include/asm/arch $(obj)include/asm $(obj)arch/m68k/include/asm/arch-aspeed
+	@rm -f $(obj)arch/m68k/cpu/aspeed/ast-scu.c
 	@rm -fr $(obj)include/generated
 	@[ ! -d $(obj)nand_spl ] || find $(obj)nand_spl -name "*" -type l -print | xargs rm -f
 	@rm -f $(obj)dts/*.tmp
@@ -891,3 +897,6 @@ backup:
 	gtar --force-local -zcvf `LC_ALL=C date "+$$F-%Y-%m-%d-%T.tar.gz"` $$F
 
 #########################################################################
+
+pub:
+	cp u-boot.bin /tftpboot/
