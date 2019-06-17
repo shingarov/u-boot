@@ -169,6 +169,9 @@ matrix:
       env:
         - JOB="arm926ejs"
           BUILDMAN="arm926ejs -x freescale,siemens,at91,kirkwood,spear,omap"
+    - name: 'buildman aspeed'
+      env:
+        - BUILDMAN="aspeed"
     - name: "buildman at91 (non arm v7)"
       env:
         - BUILDMAN="at91 -x armv7"
