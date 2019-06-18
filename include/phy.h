@@ -23,6 +23,12 @@
  */
 #define PHY_GMII2RGMII_ID	0x5a5a5a5a
 
+/*
+ * There is no actual id for this.
+ * This is just a dummy id for ncsi layer.
+ */
+#define PHY_NCSI_ID		0xbeefcafe
+
 #define PHY_MAX_ADDR 32
 
 #define PHY_FLAG_BROKEN_RESET	(1 << 0) /* soft reset not supported */
