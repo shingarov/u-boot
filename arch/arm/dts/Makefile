@@ -676,6 +676,7 @@ dtb-$(CONFIG_ARCH_BCM6858) += \
 
 dtb-$(CONFIG_ARCH_ASPEED) += \
 	ast2600-evb.dtb \
+	ast2600-tacoma.dtb \
 	ast2600-fpga.dtb \
 	ast2500-evb.dtb
 
