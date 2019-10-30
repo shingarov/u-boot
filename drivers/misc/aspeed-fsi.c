@@ -2,6 +2,8 @@
 // Copyright (C) IBM Corporation 2018
 // FSI master driver for AST2600
 
+#define DEBUG 1
+
 #include <linux/delay.h>
 #include <linux/io.h>
 #include <linux/iopoll.h>
