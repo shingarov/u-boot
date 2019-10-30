@@ -518,6 +518,8 @@ static int aspeed_fsi_probe(struct udevice *dev)
 
 	aspeed_fsi_init(aspeed);
 
+	printf("FSI: probed %p\n", aspeed->base);
+
 	return 0;
 
 err:
