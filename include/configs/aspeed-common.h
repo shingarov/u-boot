@@ -52,7 +52,9 @@
 /*
  * Miscellaneous configurable options
  */
+#ifndef CONFIG_BOOTCOMMAND
 #define CONFIG_BOOTCOMMAND		"bootm 200a0000"
+#endif
 #define CONFIG_ENV_OVERWRITE
 
 #define CONFIG_SYS_BOOTM_LEN 		(0x800000 * 2)
