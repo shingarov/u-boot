@@ -10,6 +10,7 @@ obj-$(CONFIG_STM32MP1_DDR) += stm32mp1/
 obj-$(CONFIG_STM32_SDRAM) += stm32_sdram.o
 obj-$(CONFIG_ARCH_BMIPS) += bmips_ram.o
 
+obj-$(CONFIG_ARCH_ASPEED) += aspeed/
 obj-$(CONFIG_ARCH_ROCKCHIP) += rockchip/
 
 obj-$(CONFIG_K3_AM654_DDRSS) += k3-am654-ddrss.o

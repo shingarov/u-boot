@@ -65,5 +65,6 @@ config K3_J721E_DDRSS
 	  Enabling this config adds support for the DDR memory controller
 	  on J721E family of SoCs.
 
+source "drivers/ram/aspeed/Kconfig"
 source "drivers/ram/rockchip/Kconfig"
 source "drivers/ram/stm32mp1/Kconfig"
