@@ -65,7 +65,8 @@ config ARC_TIMER
 config AST_TIMER
 	bool "Aspeed ast2400/ast2500 timer support"
 	depends on TIMER
-	default y if ARCH_ASPEED
+	depends on !SYS_ARCH_TIMER
+	default y if ASPEED_AST2500
 	help
 	  Select this to enable timer for Aspeed ast2400/ast2500 devices.
 	  This is a simple sys timer driver, it is compatible with lib/time.c,
