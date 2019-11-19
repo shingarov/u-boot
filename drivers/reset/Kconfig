@@ -82,6 +82,16 @@ config AST2500_RESET
 	  resets that are supported by watchdog. The main limitation though
 	  is that some reset signals, like I2C or MISC reset multiple devices.
 
+config AST2600_RESET
+	bool "Reset controller driver for AST2600 SoCs"
+	depends on DM_RESET && WDT_ASPEED
+	default y if ASPEED_AST2600
+	help
+	  Support for reset controller on AST2600 SoC. This controller uses
+	  watchdog to reset different peripherals and thus only supports
+	  resets that are supported by watchdog. The main limitation though
+	  is that some reset signals, like I2C or MISC reset multiple devices.
+
 config RESET_ROCKCHIP
 	bool "Reset controller driver for Rockchip SoCs"
 	depends on DM_RESET && ARCH_ROCKCHIP && CLK
