@@ -75,6 +75,12 @@ config DWAPB_GPIO
 	help
 	  Support for the Designware APB GPIO driver.
 
+config ASPEED_GPIO
+	bool "ASPEED GPIO driver"
+	depends on DM_GPIO
+	help
+	  Say yes here to select ASPEED GPIO driver.
+
 config AT91_GPIO
 	bool "AT91 PIO GPIO driver"
 	depends on DM_GPIO
