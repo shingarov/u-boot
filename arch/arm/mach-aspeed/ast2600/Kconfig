@@ -1,0 +1,13 @@
+if ASPEED_AST2600
+
+config SYS_CPU
+	default "armv7"
+
+config TARGET_EVB_AST2600
+	bool "EVB-AST2600"
+	help
+	  EVB-AST2600 is an ASPEED evaluation board for AST2600 chip.
+
+source "board/aspeed/evb_ast2600/Kconfig"
+
+endif
