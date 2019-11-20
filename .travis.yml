@@ -518,6 +518,12 @@ matrix:
       env:
         - TEST_PY_BD="sandbox_flattree"
           TOOLCHAIN="i386"
+    - name: "test/py evb-ast2600"
+      env:
+        - TEST_PY_BD="evb-ast2600"
+          TEST_PY_ID="--id qemu"
+          QEMU_TARGET="arm-softmmu"
+          BUILDMAN="^evb-ast2600$"
     - name: "test/py evb-ast2500"
       env:
         - TEST_PY_BD="evb-ast2500"
