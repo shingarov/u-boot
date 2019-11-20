@@ -16,6 +16,7 @@
 		spi0 = &fmc;
 		spi1 = &spi1;
 		spi2 = &spi2;
+		ethernet0 = &mac0;
 		ethernet1 = &mac1;
 		ethernet2 = &mac2;
 		ethernet3 = &mac3;
@@ -61,8 +62,8 @@
 
 &mac0 {
 	status = "disabled";
-	phy-mode = "rgmii";
 
+	phy-mode = "rgmii";
 	pinctrl-names = "default";
 	pinctrl-0 = <&pinctrl_mac1link_default &pinctrl_mdio1_default>;
 };
