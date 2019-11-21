@@ -170,10 +170,26 @@ struct ftgmac100 {
 #define FTGMAC100_PHYCR_MIIWR		BIT(27)
 
 /*
+ * PHY control register, aspeed variant
+ */
+#define ASPEED_PHYCR_FIRE	BIT(31)
+#define ASPEED_PHYCR_ST_22	BIT(28)
+#define ASPEED_PHYCR_WRITE	BIT(26)
+#define ASPEED_PHYCR_READ	BIT(27)
+#define ASPEED_PHYCR_WDATA(x)	((x) & 0xffff)
+#define ASPEED_PHYCR_PHYAD(x)	(((x) & 0x1f) << 21)
+#define ASPEED_PHYCR_REGAD(x)	(((x) & 0x1f) << 16)
+
+/*
  * PHY data register
  */
 #define FTGMAC100_PHYDATA_MIIWDATA(x)		((x) & 0xffff)
 #define FTGMAC100_PHYDATA_MIIRDATA(phydata)	(((phydata) >> 16) & 0xffff)
+
+/*
+ * PHY data register, aspeed variant
+ */
+#define ASPEED_PHYDATA_MIIWDATA(x)	((x) & 0xffff)
 
 /*
  * Transmit descriptor, aligned to 16 bytes

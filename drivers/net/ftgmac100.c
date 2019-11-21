@@ -25,6 +25,7 @@
 #include <linux/bitops.h>
 #include <linux/io.h>
 #include <linux/iopoll.h>
+#include <reset.h>
 
 #include "ftgmac100.h"
 
@@ -56,6 +57,7 @@
 enum ftgmac100_model {
 	FTGMAC100_MODEL_FARADAY,
 	FTGMAC100_MODEL_ASPEED,
+	FTGMAC100_MODEL_NEW_ASPEED,
 };
 
 /**
@@ -77,6 +79,10 @@ enum ftgmac100_model {
  */
 struct ftgmac100_data {
 	struct ftgmac100 *iobase;
+	struct {
+		u32 phycr;
+		u32 phydata;
+	} __iomem *mdio_addr;
 
 	struct ftgmac100_txdes txdes[PKTBUFSTX] __aligned(ARCH_DMA_MINALIGN);
 	struct ftgmac100_rxdes rxdes[PKTBUFSRX] __aligned(ARCH_DMA_MINALIGN);
@@ -157,6 +163,55 @@ static int ftgmac100_mdio_write(struct mii_dev *bus, int phy_addr, int dev_addr,
 	return ret;
 }
 
+extern int aspeed_mdio_read(struct mii_dev *bus, int phy_addr, int dev_addr,
+			    int reg_addr)
+{
+	struct ftgmac100_data *priv = bus->priv;
+	u32 phycr;
+	int ret;
+
+	phycr = ASPEED_PHYCR_FIRE | ASPEED_PHYCR_ST_22 | ASPEED_PHYCR_READ |
+		ASPEED_PHYCR_PHYAD(phy_addr) | ASPEED_PHYCR_REGAD(reg_addr);
+
+	writel(phycr, &priv->mdio_addr->phycr);
+
+	ret = readl_poll_timeout(&priv->mdio_addr->phycr, phycr,
+				 !(phycr & ASPEED_PHYCR_FIRE),
+				 FTGMAC100_MDIO_TIMEOUT_USEC);
+	if (ret) {
+		pr_err("%s: mdio read failed (phy:%d reg:%x)\n",
+		       priv->phydev->dev->name, phy_addr, reg_addr);
+		return ret;
+	}
+
+	return ASPEED_PHYDATA_MIIWDATA(readl(&priv->mdio_addr->phydata));
+}
+
+extern int aspeed_mdio_write(struct mii_dev *bus, int phy_addr, int dev_addr,
+			     int reg_addr, u16 value)
+{
+	struct ftgmac100_data *priv = bus->priv;
+	u32 phycr;
+	int ret;
+
+	phycr = ASPEED_PHYCR_WDATA(value) | ASPEED_PHYCR_FIRE |
+		ASPEED_PHYCR_ST_22 | ASPEED_PHYCR_WRITE |
+		ASPEED_PHYCR_PHYAD(phy_addr) | ASPEED_PHYCR_REGAD(reg_addr);
+
+	writel(phycr, &priv->mdio_addr->phycr);
+
+	ret = readl_poll_timeout(&priv->mdio_addr->phycr, phycr,
+				 !(phycr & ASPEED_PHYCR_FIRE),
+				 FTGMAC100_MDIO_TIMEOUT_USEC);
+	if (ret) {
+		pr_err("%s: mdio write failed (phy:%d reg:%x)\n",
+		       priv->phydev->dev->name, phy_addr, reg_addr);
+		return ret;
+	}
+
+	return 0;
+}
+
 static int ftgmac100_mdio_init(struct udevice *dev)
 {
 	struct ftgmac100_data *priv = dev_get_priv(dev);
@@ -167,9 +222,27 @@ static int ftgmac100_mdio_init(struct udevice *dev)
 	if (!bus)
 		return -ENOMEM;
 
-	bus->read  = ftgmac100_mdio_read;
-	bus->write = ftgmac100_mdio_write;
-	bus->priv  = priv;
+	if (priv->mdio_addr) {
+#if 0
+		struct reset_ctl reset_ctl;
+
+		ret = reset_get_by_index(dev, 0, &reset_ctl);
+		if (ret) {
+			printf("%s(): Failed to get reset signal\n", __func__);
+			return ret;
+		}
+
+		reset_assert(&reset_ctl);
+		reset_deassert(&reset_ctl);
+#endif
+		bus->read  = aspeed_mdio_read;
+		bus->write = aspeed_mdio_write;
+		bus->priv  = priv;
+	} else {
+		bus->read  = ftgmac100_mdio_read;
+		bus->write = ftgmac100_mdio_write;
+		bus->priv  = priv;
+	}
 
 	ret = mdio_register_seq(bus, dev->seq);
 	if (ret) {
@@ -529,7 +602,11 @@ static int ftgmac100_ofdata_to_platdata(struct udevice *dev)
 
 	pdata->max_speed = dev_read_u32_default(dev, "max-speed", 0);
 
-	if (dev_get_driver_data(dev) == FTGMAC100_MODEL_ASPEED) {
+	if (dev_get_driver_data(dev) == FTGMAC100_MODEL_NEW_ASPEED)
+		priv->mdio_addr = (void __iomem *)devfdt_get_addr_index(dev, 1);
+
+	if (dev_get_driver_data(dev) == FTGMAC100_MODEL_ASPEED ||
+	    dev_get_driver_data(dev) == FTGMAC100_MODEL_NEW_ASPEED) {
 		priv->rxdes0_edorr_mask = BIT(30);
 		priv->txdes0_edotr_mask = BIT(30);
 	} else {
@@ -598,6 +675,7 @@ static const struct eth_ops ftgmac100_ops = {
 static const struct udevice_id ftgmac100_ids[] = {
 	{ .compatible = "faraday,ftgmac100",  .data = FTGMAC100_MODEL_FARADAY },
 	{ .compatible = "aspeed,ast2500-mac", .data = FTGMAC100_MODEL_ASPEED  },
+	{ .compatible = "aspeed,ast2600-mac", .data = FTGMAC100_MODEL_NEW_ASPEED },
 	{ }
 };
 
