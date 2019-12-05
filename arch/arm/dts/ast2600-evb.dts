@@ -87,7 +87,7 @@
 &mac3 {
 	status = "disabled";
 
-	phy-mode = "rgmii";
+	phy-mode = "NC-SI";
 	pinctrl-names = "default";
 	pinctrl-0 = <&pinctrl_mac4link_default &pinctrl_mdio4_default>;
 };

@@ -5,6 +5,8 @@
  * Copyright (C) 2019, IBM Corporation.
  */
 
+#define DEBUG 1
+
 #include <common.h>
 #include <malloc.h>
 #include <phy.h>

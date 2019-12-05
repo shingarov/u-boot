@@ -5,6 +5,8 @@
  * Joe Hershberger, National Instruments
  */
 
+#define DEBUG 1
+
 #include <common.h>
 #include <dm.h>
 #include <env.h>
