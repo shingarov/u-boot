@@ -510,6 +510,8 @@ static void ncsi_update_state(struct ncsi_rsp_pkt_hdr *nh)
 
 static void ncsi_timeout_handler(void)
 {
+	debug("%s()\n", __func__);
+
 	if (ncsi_priv->pending_requests)
 		ncsi_priv->pending_requests--;
 
@@ -525,6 +527,8 @@ static int ncsi_send_command(unsigned int np, unsigned int nc, unsigned int cmd,
 	u32 checksum;
 	uchar *pkt, *start;
 	int final_len;
+
+	debug("%s(cmd=%02x)\n", __func__, cmd);
 
 	pkt = calloc(1, PKTSIZE_ALIGN + PKTALIGN);
 	if (!pkt)
@@ -637,6 +641,8 @@ void ncsi_receive(struct ethernet_hdr *et, struct ip_udp_hdr *ip,
 	struct ncsi_rsp_pkt_hdr *nh = (struct ncsi_rsp_pkt_hdr *)&pkt->rsp;
 	void (*handler)(struct ncsi_rsp_pkt *pkt) = NULL;
 	unsigned short payload;
+
+	debug("%s()\n", __func__);
 
 	if (ncsi_priv->pending_requests)
 		ncsi_priv->pending_requests--;
