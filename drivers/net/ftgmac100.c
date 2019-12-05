@@ -24,6 +24,8 @@
 #include <reset.h>
 #include <net/ncsi.h>
 
+#include <hexdump.h>
+
 #include "ftgmac100.h"
 
 /* Min frame ethernet frame size without FCS */
@@ -494,6 +496,9 @@ static int ftgmac100_recv(struct udevice *dev, int flags, uchar **packetp)
 
 	debug("%s(): RX buffer %d, %x received\n",
 	       __func__, priv->rx_index, rxlen);
+
+	print_hex_dump(" ", DUMP_PREFIX_OFFSET, 16, 1,
+			(void *)data_start, rxlen, true);
 
 	/* Invalidate received data */
 	data_end = data_start + roundup(rxlen, ARCH_DMA_MINALIGN);
