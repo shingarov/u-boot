@@ -842,8 +842,18 @@ void ncsi_probe_packages(void)
 	}
 }
 
+static bool use_ncsi;
+void set_ncsi_in_use(void) {
+	use_ncsi = true;
+}
+bool ncsi_in_use(void) {
+	return use_ncsi;
+}
+
 int ncsi_probe(struct phy_device *phydev)
 {
+	printf("%s()\n", __func__);
+
 	if (!phydev->priv) {
 		phydev->priv = malloc(sizeof(struct ncsi));
 		if (!phydev->priv)
@@ -858,6 +868,8 @@ int ncsi_probe(struct phy_device *phydev)
 
 int ncsi_startup(struct phy_device *phydev)
 {
+	printf("%s()\n", __func__);
+
 	/* Set phydev parameters */
 	phydev->speed = SPEED_100;
 	phydev->duplex = DUPLEX_FULL;

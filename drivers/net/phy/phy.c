@@ -647,7 +647,7 @@ static struct phy_driver *get_phy_driver(struct phy_device *phydev,
 	return generic_for_interface(interface);
 }
 
-static struct phy_device *phy_device_create(struct mii_dev *bus, int addr,
+struct phy_device *phy_device_create(struct mii_dev *bus, int addr,
 					    u32 phy_id, bool is_c45,
 					    phy_interface_t interface)
 {
@@ -1008,11 +1008,6 @@ struct phy_device *phy_connect(struct mii_dev *bus, int addr,
 	if (!phydev)
 		phydev = phy_connect_gmii2rgmii(bus, dev, interface);
 #endif
-
-#ifdef CONFIG_PHY_NCSI
-	phydev = phy_device_create(bus, 0, PHY_NCSI_ID, false, interface);
-#endif
-
 	if (!phydev)
 		phydev = phy_find_by_mask(bus, mask, interface);
 

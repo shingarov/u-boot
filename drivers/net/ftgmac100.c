@@ -293,12 +293,18 @@ static int ftgmac100_phy_init(struct udevice *dev)
 	struct phy_device *phydev;
 	int ret;
 
-	phydev = phy_connect(priv->bus, priv->phy_addr, dev, priv->phy_mode);
+	if (priv->ncsi_mode) {
+		phydev = phy_device_create(priv->bus, 0, PHY_NCSI_ID, false,
+					   priv->phy_mode);
+		phy_connect_dev(phydev, dev);
+	} else {
+		phydev = phy_connect(priv->bus, priv->phy_addr, dev,
+				     priv->phy_mode);
+		phydev->supported &= PHY_GBIT_FEATURES;
+	}
 	if (!phydev)
 		return -ENODEV;
 
-	if (!priv->ncsi_mode)
-		phydev->supported &= PHY_GBIT_FEATURES;
 	if (priv->max_speed) {
 		ret = phy_set_supported(phydev, priv->max_speed);
 		if (ret)
@@ -356,8 +362,7 @@ static void ftgmac100_stop(struct udevice *dev)
 
 	writel(0, &ftgmac100->maccr);
 
-	if (!priv->ncsi_mode)
-		phy_shutdown(priv->phydev);
+	phy_shutdown(priv->phydev);
 }
 
 static int ftgmac100_start(struct udevice *dev)
@@ -465,6 +470,19 @@ static int ftgmac100_free_pkt(struct udevice *dev, uchar *packet, int length)
 	return 0;
 }
 
+#include <net/ncsi-pkt.h>
+void dump_ncsi(void *pkt, size_t len)
+{
+	struct ncsi_pkt_hdr *nh = (struct ncsi_pkt_hdr *)(pkt + ETH_HLEN);
+//	struct ncsi_rsp_pkt_hdr *rnh = (struct ncsi_rsp_pkt_hdr *)(ncsi_reply + ETH_HLEN);
+
+//	debug("type:%x code:%x size=%d\n", nh->type, rnh->reason,
+//			ETH_HLEN + sizeof(*nh));
+
+	print_hex_dump("ncsi header:", DUMP_PREFIX_OFFSET, 16, 1,
+			(void *)nh, sizeof(*nh), true);
+}
+
 /*
  * Get a data block via Ethernet
  */
@@ -497,8 +515,10 @@ static int ftgmac100_recv(struct udevice *dev, int flags, uchar **packetp)
 	debug("%s(): RX buffer %d, %x received\n",
 	       __func__, priv->rx_index, rxlen);
 
+	//dump_ncsi((void *)data_start, rxlen);
+
 	print_hex_dump(" ", DUMP_PREFIX_OFFSET, 16, 1,
-			(void *)data_start, rxlen, true);
+                       (void *)data_start, rxlen, true);
 
 	/* Invalidate received data */
 	data_end = data_start + roundup(rxlen, ARCH_DMA_MINALIGN);
@@ -553,6 +573,9 @@ static int ftgmac100_send(struct udevice *dev, void *packet, int length)
 	data_start = curr_des->txdes3;
 	data_end = data_start + roundup(length, ARCH_DMA_MINALIGN);
 	flush_dcache_range(data_start, data_end);
+
+	print_hex_dump(" ", DUMP_PREFIX_OFFSET, 16, 1,
+                       (void *)data_start, length, true);
 
 	/* Only one segment on TXBUF */
 	curr_des->txdes0 &= priv->txdes0_edotr_mask;
@@ -630,9 +653,13 @@ static int ftgmac100_probe(struct udevice *dev)
 	const char *phy_mode;
 	int ret;
 
+	printf("%s()\n", __func__);
+
 	phy_mode = dev_read_string(dev, "phy-mode");
 	priv->ncsi_mode = dev_read_bool(dev, "use-ncsi") ||
 		(phy_mode && strcmp(phy_mode, "NC-SI") == 0);
+	if (priv->ncsi_mode)
+		set_ncsi_in_use();
 
 	priv->iobase = (struct ftgmac100 *)pdata->iobase;
 	priv->phy_mode = pdata->phy_interface;

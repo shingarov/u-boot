@@ -413,7 +413,7 @@ int net_loop(enum proto_t protocol)
 	debug_cond(DEBUG_INT_STATE, "--- net_loop Entry\n");
 
 #ifdef CONFIG_PHY_NCSI
-	if (protocol != NCSI && !ncsi_active()) {
+	if (ncsi_in_use() && protocol != NCSI && !ncsi_active()) {
 		printf("%s: configuring NCSI first\n", __func__);
 		if (net_loop(NCSI) < 0)
 			return ret;
