@@ -147,6 +147,26 @@ F:	include/configs/meson64.h
 F:	include/configs/meson64_android.h
 N:	meson
 
+ARM ASPEED
+M:	Joel Stanley <joel@jms.id.au>
+S:	Maintained
+F:	arch/arm/mach-aspeed/
+F:	arch/arm/dts/ast*
+F:	board/aspeed/
+F:	configs/evb-ast2600_defconfig
+F:	drivers/clk/aspeed/clk_ast2600.c
+F:	drivers/gpio/aspeed_gpio.c
+F:	drivers/net/ftgmac100.*
+F:	drivers/pinctrl/aspeed/
+F:	drivers/ram/aspeed/
+F:	drivers/reset/ast2600-reset.c
+F:	include/configs/evb_ast*.h
+F:	include/dt-bindings/clock/ast2600-clock.h
+F:	include/dt-bindings/gpio/aspeed-gpio.h
+F:	include/dt-bindings/reset/ast2600-reset.h
+N:	aspeed
+N:	ast
+
 ARM BROADCOM BCM283X
 M:	Matthias Brugger <mbrugger@suse.com>
 S:	Maintained
