@@ -170,6 +170,7 @@ matrix:
         - TEST_PY_BD="evb-ast2600"
           TEST_PY_ID="--id qemu"
           QEMU_TARGET="arm-softmmu"
+          QEMU_VERSION="28db64fce555a03b4ca256d5b6f4290abdfbd9e8"
           BUILDMAN="^evb-ast2600$"
     - name: "test/py evb-ast2500"
       env:
