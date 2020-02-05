@@ -66,18 +66,18 @@ struct otpconf_parse {
 };
 
 struct otpstrap_info {
-	uint32_t bit_offset;
-	uint32_t length;
-	int value;
-	char information[80];
+	int8_t bit_offset;
+	int8_t length;
+	int8_t value;
+	char *information;
 };
 
 struct otpconf_info {
-	uint32_t dw_offset;
-	uint32_t bit_offset;
-	uint32_t length;
-	int value;
-	char information[80];
+	int8_t dw_offset;
+	int8_t bit_offset;
+	int8_t length;
+	int8_t value;
+	char *information;
 };
 
 struct otpkey_type {
@@ -89,11 +89,11 @@ struct otpkey_type {
 
 struct otp_info_cb {
 	int version;
-	struct otpstrap_info *strap_info;
+	const struct otpstrap_info *strap_info;
 	int strap_info_len;
-	struct otpconf_info *conf_info;
+	const struct otpconf_info *conf_info;
 	int conf_info_len;
-	struct otpkey_type *key_info;
+	const struct otpkey_type *key_info;
 	int key_info_len;
 };
 
@@ -116,7 +116,7 @@ void printProgress(int numerator, int denominator, char *format, ...)
 
 static struct otp_info_cb info_cb;
 
-struct otpstrap_info a0_strap_info[] = {
+static const struct otpstrap_info a0_strap_info[] = {
 	{ 0, 1, 0, "Disable secure boot" },
 	{ 0, 1, 1, "Enable secure boot"	},
 	{ 1, 1, 0, "Disable boot from eMMC" },
@@ -228,7 +228,7 @@ struct otpstrap_info a0_strap_info[] = {
 	{ 63, 1, OTP_REG_RESERVED, "" }
 };
 
-struct otpstrap_info a1_strap_info[] = {
+static const struct otpstrap_info a1_strap_info[] = {
 	{ 0, 1, 0, "Disable secure boot" },
 	{ 0, 1, 1, "Enable secure boot"	},
 	{ 1, 1, 0, "Disable boot from eMMC" },
@@ -340,7 +340,7 @@ struct otpstrap_info a1_strap_info[] = {
 	{ 63, 1, OTP_REG_RESERVED, "" }
 };
 
-struct otpconf_info a0_conf_info[] = {
+static const struct otpconf_info a0_conf_info[] = {
 	{ 0, 0,  1,  0, "Enable Secure Region programming" },
 	{ 0, 0,  1,  1, "Disable Secure Region programming" },
 	{ 0, 1,  1,  0, "Disable Secure Boot" },
@@ -425,7 +425,7 @@ struct otpconf_info a0_conf_info[] = {
 	{ 11, 0, 32, OTP_REG_VALUE, "Manifest ID high : 0x%x" }
 };
 
-struct otpconf_info a1_conf_info[] = {
+static const struct otpconf_info a1_conf_info[] = {
 	{ 0, 0,  1,  OTP_REG_RESERVED, "" },
 	{ 0, 1,  1,  0, "Disable Secure Boot" },
 	{ 0, 1,  1,  1, "Enable Secure Boot" },
@@ -509,7 +509,7 @@ struct otpconf_info a1_conf_info[] = {
 	{ 11, 0, 32, OTP_REG_VALUE, "Manifest ID high : 0x%x" }
 };
 
-struct otpkey_type a0_key_type[] = {
+static const struct otpkey_type a0_key_type[] = {
 	{0, OTP_KEY_TYPE_AES,   0, "AES-256 as OEM platform key for image encryption/decryption"},
 	{1, OTP_KEY_TYPE_VAULT, 0, "AES-256 as secret vault key"},
 	{4, OTP_KEY_TYPE_HMAC,  1, "HMAC as encrypted OEM HMAC keys in Mode 1"},
@@ -520,7 +520,7 @@ struct otpkey_type a0_key_type[] = {
 	{14, OTP_KEY_TYPE_RSA,  0, "RSA-private as AES key decryption key"},
 };
 
-struct otpkey_type a1_key_type[] = {
+static const struct otpkey_type a1_key_type[] = {
 	{1, OTP_KEY_TYPE_VAULT, 0, "AES-256 as secret vault key"},
 	{2, OTP_KEY_TYPE_AES,   1, "AES-256 as OEM platform key for image encryption/decryption in Mode 2 or AES-256 as OEM DSS keys for Mode GCM"},
 	{8, OTP_KEY_TYPE_RSA,   1, "RSA-public as OEM DSS public keys in Mode 2"},
@@ -795,7 +795,7 @@ static void otp_strap_status(struct otpstrap_status *otpstrap)
 
 static int otp_print_conf_image(uint32_t *OTPCFG)
 {
-	struct otpconf_info *conf_info = info_cb.conf_info;
+	const struct otpconf_info *conf_info = info_cb.conf_info;
 	uint32_t *OTPCFG_KEEP = &OTPCFG[12];
 	uint32_t mask;
 	uint32_t dw_offset;
@@ -876,7 +876,7 @@ static int otp_print_conf_image(uint32_t *OTPCFG)
 
 static int otp_print_conf_info(int input_offset)
 {
-	struct otpconf_info *conf_info = info_cb.conf_info;
+	const struct otpconf_info *conf_info = info_cb.conf_info;
 	uint32_t OTPCFG[12];
 	uint32_t mask;
 	uint32_t dw_offset;
@@ -946,7 +946,7 @@ static int otp_print_conf_info(int input_offset)
 
 static int otp_print_strap_image(uint32_t *OTPSTRAP)
 {
-	struct otpstrap_info *strap_info = info_cb.strap_info;
+	const struct otpstrap_info *strap_info = info_cb.strap_info;
 	uint32_t *OTPSTRAP_PRO = &OTPSTRAP[4];
 	uint32_t *OTPSTRAP_KEEP = &OTPSTRAP[2];
 	int i;
@@ -1013,7 +1013,7 @@ static int otp_print_strap_image(uint32_t *OTPSTRAP)
 
 static int otp_print_strap_info(int view)
 {
-	struct otpstrap_info *strap_info = info_cb.strap_info;
+	const struct otpstrap_info *strap_info = info_cb.strap_info;
 	struct otpstrap_status strap_status[64];
 	int i, j;
 	int fail = 0;
@@ -1107,7 +1107,7 @@ static void buf_print(char *buf, int len)
 static int otp_print_data_info(uint32_t *buf)
 {
 	int key_id, key_offset, last, key_type, key_length, exp_length;
-	struct otpkey_type *key_info_array = info_cb.key_info;
+	const struct otpkey_type *key_info_array = info_cb.key_info;
 	struct otpkey_type key_info;
 	char *byte_buf;
 	int i = 0, len = 0;
