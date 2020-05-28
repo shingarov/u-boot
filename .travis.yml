@@ -77,7 +77,7 @@ env:
     - BUILD_DIR=build
     - HOSTCC="cc"
     - HOSTCXX="c++"
-    - QEMU_VERSION="v4.2.0"
+    - QEMU_VERSION="v5.0.0"
 
 before_script:
   # install toolchains based on TOOLCHAIN} variable
