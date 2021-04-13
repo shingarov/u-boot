@@ -301,3 +301,7 @@
 &display_port {
 	status = "okay";
 };
+
+&hace {
+	status = "okay";
+};
