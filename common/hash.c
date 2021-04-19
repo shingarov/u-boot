@@ -545,7 +545,14 @@ int hash_command(const char *algo_name, int flags, cmd_tbl_t *cmdtp, int flag,
 				  sizeof(uint32_t) * HASH_MAX_DIGEST_SIZE);
 
 		buf = map_sysmem(addr, len);
+#if CONFIG_SHA_PROG_HW_ACCEL
+		void *ctx;
+		algo->hash_init(algo, &ctx);
+		algo->hash_update(algo, ctx, buf, len, true);
+		algo->hash_finish(algo, ctx, output, HASH_MAX_DIGEST_SIZE);
+#else
 		algo->hash_func_ws(buf, len, output, algo->chunk_size);
+#endif
 		unmap_sysmem(buf);
 
 		/* Try to avoid code bloat when verify is not needed */
