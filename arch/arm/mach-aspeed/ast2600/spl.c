@@ -13,6 +13,10 @@
 
 DECLARE_GLOBAL_DATA_PTR;
 
+#define AST_SCU_BASE		(0x1E6E2000)
+#define AST_SCU_HW_STRAP1	(AST_SCU_BASE + 0x500)
+#define AST_SCU_HW_STRAP2	(AST_SCU_BASE + 0x510)
+
 void board_init_f(ulong dummy)
 {
 	spl_early_init();
@@ -23,7 +27,13 @@ void board_init_f(ulong dummy)
 
 u32 spl_boot_device(void)
 {
-	return BOOT_DEVICE_RAM;
+	if (readl(AST_SCU_HW_STRAP1) & BIT(8))
+		return BOOT_DEVICE_UART;
+
+	if (readl(AST_SCU_HW_STRAP2) & BIT(2))
+		return BOOT_DEVICE_SPI;
+	else
+		return BOOT_DEVICE_MMC1;
 }
 
 struct image_header *spl_get_load_buffer(ssize_t offset, size_t size)
