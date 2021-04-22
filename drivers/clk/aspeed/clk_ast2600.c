@@ -1158,7 +1158,7 @@ static int ast2600_clk_enable(struct clk *clk)
 	case ASPEED_CLK_GATE_EMMCCLK:
 		ast2600_enable_emmcclk(priv->scu);
 		break;
-	case ASPEED_CLK_GATE_EMMCEXTCLK:
+	case ASPEED_CLK_EMMC:
 		ast2600_enable_extemmcclk(priv->scu);
 		break;
 	case ASPEED_CLK_GATE_FSICLK:
