@@ -185,9 +185,28 @@ extern uint32_t ast2600_get_pll_rate(struct ast2600_scu *scu, int pll_idx)
 	uint32_t mul = 1, div = 1;
 
 	switch (pll_idx) {
-	case ASPEED_CLK_APLL:
+	case ASPEED_CLK_APLL: {
+		uint8_t hw_rev = readl(&scu->chip_id2) >> 16;
 		pll_reg.w = readl(&scu->apll);
+
+		if (hw_rev < 2) {
+			/* AST2600A0/A1 have a different register layout */
+
+			if (pll_reg.w & BIT(20))
+				return CLKIN_25M;
+
+			/* F = 25Mhz * (2-od) * [(m + 2) / (n + 1)] */
+			uint32_t m = (pll_reg.w >> 5) & 0x3f;
+			uint32_t od = (pll_reg.w >> 4) & 0x1;
+			uint32_t n = pll_reg.w & 0xf;
+
+			mul = (2 - od) * (m + 2);
+			div = n + 1;
+
+			return (CLKIN_25M * mul) / div;
+		}
 		break;
+	}
 	case ASPEED_CLK_DPLL:
 		pll_reg.w = readl(&scu->dpll);
 		break;
