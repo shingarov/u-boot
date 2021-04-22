@@ -28,6 +28,7 @@ dtb-$(CONFIG_TARGET_TUGE1) += kmtuge1.dtb
 dtb-$(CONFIG_TARGET_TUXX1) += kmtuxa1.dtb
 dtb-$(CONFIG_TARGET_MCR3000) += mcr3000.dtb
 dtb-$(CONFIG_TARGET_GAZERBEAM) += gazerbeam.dtb
+dtb-$(CONFIG_TARGET_ARTY_A7) += microwatt.dtb
 
 targets += $(dtb-y)
 
