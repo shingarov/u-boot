@@ -134,3 +134,13 @@
         /*Y0-Y7*/       "","","","","","","","",
         /*Z0-Z7*/       "","","","","","","","";
 };
+
+&hace {
+	u-boot,dm-pre-reloc;
+	status = "okay";
+};
+
+&acry {
+	u-boot,dm-pre-reloc;
+	status = "okay";
+};
