@@ -395,6 +395,11 @@ config KS8851_MLL_BASEADDR
 endif #DM_ETH
 endif #KS8851_MLL
 
+config LITEETH
+	bool "LiteX LiteEth Ethernet MAC"
+	help
+	 Driver for the LiteEth Ethernet MAC from LiteX.
+
 config MVGBE
 	bool "Marvell Orion5x/Kirkwood network interface support"
 	depends on ARCH_KIRKWOOD || ARCH_ORION5X
