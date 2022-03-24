@@ -20,6 +20,7 @@
 #define CONFIG_405GP		1	/* This is a PPC405 CPU		*/
 #define CONFIG_WALNUT		1	/* ...on a WALNUT board		*/
 					/* ...or on a SYCAMORE board	*/
+#define CONFIG_DHT_WALNUT	1	/* Just like a walnut, but .... */
 
 #define	CONFIG_SYS_TEXT_BASE	0xFFFC0000
 
@@ -57,6 +58,7 @@
 #define CONFIG_CMD_PCI
 #define CONFIG_CMD_SDRAM
 #define CONFIG_CMD_SNTP
+#define CONFIG_CMD_IDE
 
 #define CONFIG_SPD_EEPROM      1       /* use SPD EEPROM for setup    */
 
@@ -108,6 +110,46 @@
 #define CONFIG_SYS_PCI_PTM2LA	0x00000000	/* disabled			*/
 #define CONFIG_SYS_PCI_PTM2MS	0x00000000	/* disabled			*/
 #define CONFIG_SYS_PCI_PTM2PCI 0x04000000	/* Host: use this pci address	*/
+
+/***********************************************************************
+ * External peripheral base address
+ ***********************************************************************/
+#define CONFIG_ISA_IO_BASE_ADDRESS 0xE8000000
+
+/************************************************************
+ * IDE/ATA stuff
+ ************************************************************/
+#define CONFIG_SYS_IDE_MAXBUS		1		   /* max. 2 IDE busses  */
+#define CONFIG_SYS_IDE_MAXDEVICE	(CONFIG_SYS_IDE_MAXBUS*2) /* max. 2 per IDE bus */
+
+#define CONFIG_SYS_ATA_BASE_ADDR	CONFIG_ISA_IO_BASE_ADDRESS	/* base address */
+#define CONFIG_SYS_ATA_IDE0_OFFSET	0x01F0		/* ide0 offset		*/
+#define CONFIG_SYS_ATA_DATA_OFFSET	0		/* data reg offset	*/
+#define CONFIG_SYS_ATA_REG_OFFSET	0		/* reg offset		*/
+#define CONFIG_SYS_ATA_ALT_OFFSET	0x200		/* alternate register offset */
+
+#undef CONFIG_IDE_8xx_DIRECT		/* no pcmcia interface required */
+#undef CONFIG_IDE_LED			/* no led for ide supported	*/
+#undef CONFIG_IDE_RESET			/* no reset for ide supported	*/
+
+#define CONFIG_LBA48		1
+#define CONFIG_DOS_PARTITION	1
+
+#define CONFIG_SUPPORT_VFAT
+
+/************************************************************
+ * ATAPI support (experimental)
+ ************************************************************/
+#define CONFIG_ATAPI			/* enable ATAPI Support */
+
+/************************************************************
+ * SCSI support (experimental) only SYM53C8xx supported
+ ************************************************************/
+#define CONFIG_SCSI_SYM53C8XX
+#define CONFIG_SCSI_MAX_LUN	8	/* number of supported LUNs */
+#define CONFIG_SCSI_MAX_SCSI_ID	7	/* maximum SCSI ID (0..6) */
+#define CONFIG_SCSI_MAX_DEVICE	CONFIG_SCSI_MAX_SCSI_ID * CONFIG_SCSI_MAX_LUN /* maximum Target devices */
+#define CONFIG_SCSI_SPIN_UP_TIME	2
 
 /*-----------------------------------------------------------------------
  * Start addresses for the final memory configuration

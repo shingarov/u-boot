@@ -34,8 +34,6 @@ obj-y	+= sdram.o
 obj-y	+= speed.o
 obj-y	+= tlb.o
 obj-y	+= traps.o
-obj-y	+= usb.o
-obj-y	+= usb_ohci.o
 obj-$(CONFIG_XILINX_440) += xilinx_irq.o
 ifndef CONFIG_XILINX_440
 obj-y	+= 4xx_uart.o

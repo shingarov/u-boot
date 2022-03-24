@@ -1,0 +1,114 @@
+Changes to boot Linux 2.6.15.4-gref + Debian 3.1 (sarge) on DHT Walnut
+
+1. Start from u-boot v2016.01
+
+2. Enable IDE in common/Makefile
+
+3. With IDE enabled it will not fit.
+Therefore, we remove a number of modules and commands not essential to
+booting from local IDE.  All these changes are in this commit.
+
+4. Make:
+
+. /opt/eldk-5.8/powerpc-4xx-softfloat/environment-setup-ppc405-linux
+make distclean
+make walnut_config
+make all
+
+...will produce u-boot.bin of exactly 256KB.
+
+5. Flash as described here:
+https://elinux.org/Category:DHT-Walnut
+https://elinux.org/DHT-Walnut_U_Boot
+
+=> tftpboot 800000 u-boot.bin
+...
+done
+Bytes transferred = 262144 (40000 hex)
+=> crc 800000 40000
+... should give the same as `crc32 u-boot.bin`
+=> protect off fffc0000 ffffffff
+=> erase fffc0000 ffffffff
+=> cp.b 800000 fffc0000 40000
+=> crc fffc0000 40000
+=> reset
+
+U-Boot 2016.01-dirty (Mar 12 2022 - 08:56:24 -0500)
+
+CPU:   AMCC PowerPC 405GP Rev. E at 266.640 MHz (PLB=66 OPB=33 EBC=33)
+       Internal PCI arbiter enabled, PCI async ext clock used
+       16 KiB I-Cache 8 KiB D-Cache
+Board: DHT Walnut
+I2C:   ready
+DRAM:  32 MiB
+Flash: 512 KiB
+PCI:   Bus Dev VenId DevId Class Int
+PCI:
+  00:04.0     - 105a:0d30 - Mass storage controller
+Net:   ppc_4xx_eth0
+IDE:   Bus 0: OK
+  Device 0: Model: ULTIMATE CF CARD Firm: Ver6.04K Ser#: 5B2512DE000E8A09
+            Type: Hard Disk
+            Supports 48-bit addressing
+            Capacity: 30559.9 MB = 29.8 GB (62586720 x 512)
+  Device 1: not available
+
+Type run flash_nfs to mount root filesystem over NFS
+
+Hit any key to stop autoboot:  0
+=> printenv
+addip=setenv bootargs ${bootargs} ip=${ipaddr}:${serverip}:${gatewayip}:${netmask}:${hostname}:${netdev}:off panic=1
+addtty=setenv bootargs ${bootargs} console=ttyS0,${baudrate}
+autostart=yes
+baudrate=115200
+bootargs=root=/dev/hda4 console=ttyS0,115200
+bootcmd=diskboot 400000 0:1
+bootdelay=5
+bootfile=/tftpboot/walnut/uImage
+ethact=ppc_4xx_eth0
+ethaddr=de:ad:be:ef:00:21
+flash_nfs=run nfsargs addip addtty;bootm ${kernel_addr}
+flash_self=run ramargs addip addtty;bootm ${kernel_addr} ${ramdisk_addr}
+hostname=walnut
+ipaddr=192.168.75.77
+kernel_addr=fff80000
+load=tftp 100000 /tftpboot/walnut/u-boot.bin
+loads_echo=1
+net_nfs=tftp 200000 ${bootfile};run nfsargs addip addtty;bootm
+netdev=eth0
+netmask=255.255.255.0
+nfsargs=setenv bootargs root=/dev/nfs rw nfsroot=${serverip}:${rootpath}
+preboot=echo;echo Type "run flash_nfs" to mount root filesystem over NFS;echo
+ramargs=setenv bootargs root=/dev/ram rw
+ramdisk_addr=fff80000
+rootpath=/opt/eldk/ppc_4xx
+serverip=192.168.75.2
+stderr=serial
+stdin=serial
+stdout=serial
+upd=run load;run update
+update=protect off fffc0000 ffffffff;era fffc0000 ffffffff;cp.b 100000 fffc0000 40000;setenv filesize;saveenv
+ver=U-Boot 2016.01-dirty (Mar 12 2022 - 08:56:24 -0500)
+
+Environment size: 1273/16379 bytes
+=> _
+
+6. The Kingston CF/32GB-U2 "ultimate 266X" card is connected to the Walnut's
+IDE via StarTech.com IDE2CF (https://www.amazon.ca/gp/product/B0026OYEEQ) and
+partitioned into
+/dev/hda1 = kernel (16MB)
+/dev/hda2 = alt kernel for experimentation (16MB)
+/dev/hda3 = swap (256MB)
+/dev/hda4 = linux (debian root)
+
+hda1 and hda2 don't carry filesystems; the kernel is dd's directly over the device.
+In this experiment I used the prebuilt 2.6.15.4-gref binary.
+
+7. For root fs, mount hda4 as /mnt and
+
+# debootstrap --arch powerpc --foreign sarge /mnt http://archive.debian.org/debian
+
+and basic setup:
+
+# LANG=C.UTF-8 chroot /mnt  qemu-ppc-static /bin/bash
+

@@ -58,7 +58,11 @@ int checkboard(void)
 	if (pvr == PVR_405GPR_RB) {
 		puts("Board: Sycamore - AMCC PPC405GPr Evaluation Board");
 	} else {
+#ifdef CONFIG_DHT_WALNUT
+		puts("Board: DHT Walnut");
+#else
 		puts("Board: Walnut - AMCC PPC405GP Evaluation Board");
+#endif
 	}
 
 	if (i > 0) {

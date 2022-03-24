@@ -122,7 +122,6 @@ obj-$(CONFIG_CMD_CRAMFS) += cmd_cramfs.o
 obj-$(CONFIG_CMD_LDRINFO) += cmd_ldrinfo.o
 obj-$(CONFIG_CMD_LED) += cmd_led.o
 obj-$(CONFIG_CMD_LICENSE) += cmd_license.o
-obj-y += cmd_load.o
 obj-$(CONFIG_LOGBUFFER) += cmd_log.o
 obj-$(CONFIG_ID_EEPROM) += cmd_mac.o
 obj-$(CONFIG_CMD_MD5SUM) += cmd_md5sum.o
@@ -181,9 +180,6 @@ ifdef CONFIG_LZMA
 obj-$(CONFIG_CMD_LZMADEC) += cmd_lzmadec.o
 endif
 ifdef CONFIG_CMD_USB
-obj-y += cmd_usb.o
-obj-y += usb.o usb_hub.o
-obj-$(CONFIG_USB_STORAGE) += usb_storage.o
 endif
 obj-$(CONFIG_CMD_FASTBOOT) += cmd_fastboot.o
 obj-$(CONFIG_CMD_FS_UUID) += cmd_fs_uuid.o
@@ -213,7 +209,6 @@ obj-$(CONFIG_MENU) += menu.o
 obj-$(CONFIG_MODEM_SUPPORT) += modem.o
 obj-$(CONFIG_UPDATE_TFTP) += update.o
 obj-$(CONFIG_DFU_TFTP) += update.o
-obj-$(CONFIG_USB_KEYBOARD) += usb_kbd.o
 obj-$(CONFIG_CMD_DFU) += cmd_dfu.o
 obj-$(CONFIG_CMD_GPT) += cmd_gpt.o
 obj-$(CONFIG_CMD_ETHSW) += cmd_ethsw.o
@@ -225,15 +220,11 @@ endif
 
 ifdef CONFIG_SPL_BUILD
 obj-$(CONFIG_ENV_IS_IN_FLASH) += env_flash.o
-obj-$(CONFIG_SPL_YMODEM_SUPPORT) += xyzModem.o
 obj-$(CONFIG_SPL_NET_SUPPORT) += miiphyutil.o
 obj-$(CONFIG_SPL_OF_TRANSLATE) += fdt_support.o
 ifdef CONFIG_SPL_USB_HOST_SUPPORT
-obj-$(CONFIG_SPL_USB_SUPPORT) += usb.o usb_hub.o
-obj-$(CONFIG_USB_STORAGE) += usb_storage.o
 endif
 ifdef CONFIG_SPL_SATA_SUPPORT
-obj-$(CONFIG_CMD_SCSI) += cmd_scsi.o
 endif
 # environment
 ifdef CONFIG_SPL_ENV_SUPPORT
@@ -296,7 +287,6 @@ obj-y += cli.o
 obj-y += cli_readline.o
 obj-y += command.o
 obj-y += s_record.o
-obj-y += xyzModem.o
 obj-y += cmd_disk.o
 
 CFLAGS_env_embedded.o := -Wa,--no-warn -DENV_CRC=$(shell tools/envcrc 2>/dev/null)
