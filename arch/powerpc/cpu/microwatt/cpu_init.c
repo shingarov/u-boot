@@ -3,6 +3,11 @@
 #include <asm/global_data.h>
 #include <asm/processor.h>
 
+void debugger(volatile int *p) {
+    *p = 0;
+    while(!(*p)) {}
+}
+
 gd_t *gd = (gd_t *)(CONFIG_SYS_INIT_RAM_ADDR + CONFIG_SYS_GBL_DATA_OFFSET);
 
 void cpu_init_f(void)
